@@ -63,14 +63,5 @@ let int;
 let auto = false;
 
 function keyPressed() {
-  switch (keyCode) {
-    case '32':
-      clearInterval(int);
-      auto = !auto
-      console.log("Turn " + (auto ? "on" : "off") + " auto-pilot.")
-      if (auto) int = setInterval(() => {
-        socket.emit("strike", floor(random(6)));
-      }, 3000);
-      break;
-  }
+  socket.emit("strike", key);
 }

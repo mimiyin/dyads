@@ -9,6 +9,8 @@ socket.on("connect", function () {
 // Keep track of users
 let users = {};
 
+// Pause between
+const INTERVAL = 1000;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -20,7 +22,7 @@ function setup() {
 
   // Listen for new data
   socket.on("strike", function (idx) {
-    let user = users[4];
+    let user = users[idx];
     if (user) user.strike(idx);
   });
 
@@ -45,7 +47,7 @@ class User {
   constructor(idx) {
     console.log("idx", idx);
 
-    let x = width * (idx > 0 ? 0.67 : 0.34);
+    let x = width * (idx > 1 ? 0.67 : 0.34);
     let y = height / 2;
     this.loc = createVector(x, y);
     this.diam = 100;
@@ -61,11 +63,16 @@ class User {
   strike(idx) {
     this.idx = idx;
     if(this.go) {
-      socket.emit('strike', this.idx);
+      // 1-3, 4-6 (2*2, 2*3)
+      let bottom = this.idx * this.idx;
+      let top = this.idx * 3 + 1;
+      let strikeIdx = floor(random(bottom, top));
+      console.log("STRIKE", strikeIdx);
+      socket.emit('strike', strikeIdx);
       this.go = false;
       setTimeout(()=>{
         this.go = true;
-      }, 3000);
+      }, INTERVAL);
 
     }
   }
