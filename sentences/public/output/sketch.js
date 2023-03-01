@@ -67,7 +67,7 @@ class User {
       let bottom = this.idx * this.idx;
       let top = this.idx * 3 + 1;
       let strikeIdx = floor(random(bottom, top));
-      console.log("STRIKE", strikeIdx);
+      console.log("STRIKE", idx, bottom, top, strikeIdx);
       socket.emit('strike', strikeIdx);
       this.go = false;
       setTimeout(()=>{

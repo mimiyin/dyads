@@ -46,7 +46,7 @@ function draw() {
   // Change in acceleration
   let d = dist(accelerationX, accelerationY, accelerationZ, pAccelerationX, pAccelerationY, pAccelerationZ)
   let r = floor(random(6));
-  if (d > 10) socket.emit('strike', r);
+  if (d > 10) socket.emit('strike', idx);
 
   // Draw from the center
   translate(width / 2, height / 2);
@@ -63,5 +63,5 @@ let int;
 let auto = false;
 
 function keyPressed() {
-  socket.emit("strike", key);
+  socket.emit("strike", idx);
 }

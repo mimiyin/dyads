@@ -1,9 +1,42 @@
 // Asking for permision for motion sensors on iOS 13+ devices
 if (typeof DeviceOrientationEvent.requestPermission === "function") {
   document.body.addEventListener("click", function() {
+    console.log("Absolute", DeviceOrientation.absolute);
     DeviceOrientationEvent.requestPermission();
     DeviceMotionEvent.requestPermission();
   });
+}
+
+// const sensorAbs = new AbsoluteOrientationSensor();
+// sensorAbs.onreading = (e) => {
+//   console.log("ABSOLUTE");
+//   torus.quaternion.fromArray(sensorAbs.quaternion);
+//   socket.emit("orientation", {
+//     idx: idx,
+//     orientation: e
+//   });
+// }
+// sensorAbs.start();
+
+let magSensor = false;
+try {
+  magSensor = new Magnetometer({
+    frequency: 60
+  });
+
+  magSensor.addEventListener('reading', (e) => {
+    rotZ = magSensor.y;
+    socket.emit("orientation", {
+      idx: idx,
+      orientation: rotZ
+    });
+    console.log(`Magnetic field along the X-axis ${magSensor.x}`);
+    console.log(`Magnetic field along the Y-axis ${magSensor.y}`);
+    console.log(`Magnetic field along the Z-axis ${magSensor.z}`);
+  });
+  magSensor.start();
+} catch (e) {
+  console.log("No magnetometer.")
 }
 
 // let magSensor = new Magnetometer({frequency: 60});
@@ -17,6 +50,7 @@ if (typeof DeviceOrientationEvent.requestPermission === "function") {
 
 // Get orientation
 let rotZ = 0;
+let rotX = 0;
 
 console.log("HELLO");
 
@@ -25,7 +59,8 @@ let socket = io("/input");
 let idx = 0;
 
 // Start off with pitch only
-let onlySendOrientation = true;
+let onlySetRate = true;
+let onlySetLevel = false;
 
 // Listen for confirmation of connection
 socket.on("connect", function() {
@@ -54,9 +89,16 @@ function setup() {
   frameRate(30);
 
   // Listen for turning off level
-  socket.on('only change rate', function(data) {
-    onlySendOrientation = data;
-  })
+  socket.on('only set rate', function(data) {
+    console.log("ONLY SET RATE", data);
+    onlySetRate = data;
+  });
+
+  // Listen for turning off orientation
+  socket.on('only set level', function(data) {
+    console.log("ONLY SET LEVEL", data);
+    onlySetLevel = data;
+  });
 }
 
 function draw() {
@@ -69,7 +111,8 @@ function draw() {
   // Draw all the notes in the diatonic scale
 
   // Re-orient to top
-  rotZ = rotationZ;
+  if(!magSensor) rotZ = rotationZ;
+  rotX = rotationX + 90;
 
   push();
   rotate(rotZ);
@@ -88,27 +131,32 @@ function draw() {
 
   push();
   rotate(rotationX);
-  stroke("yellow");
+  stroke(onlySetLevel ? "yellow" : "orange");
+  strokeWeight(20);
   line(0, 0, diag / 2, 0);
   pop();
 
-  stroke("red");
+  push();
+  stroke(onlySetRate ? "red" : "blue");
   strokeWeight(20);
   line(0, 0, 0, -diag / 2);
 
   // Send my pitch data
-  socket.emit("orientation", {
-    idx: idx,
-    orientation: rotZ
-  });
-
-  // Send level data
-  if (!onlySendOrientation) {
-    socket.emit("level", {
+  if (!onlySetLevel) {
+    socket.emit("orientation", {
       idx: idx,
-      level: rotationX
+      orientation: rotZ
     });
   }
+
+  // Send level data
+  if (!onlySetRate) {
+    socket.emit("level", {
+      idx: idx,
+      level: rotX
+    });
+  }
+  pop();
 }
 
 
@@ -144,9 +192,9 @@ function keyPressed() {
   }
 }
 
-function mousePressed() {
+function mouseDragged() {
   socket.emit("level", {
     idx: idx,
-    level: floor(180*mouseY/height)
+    level: 180 * mouseY / height
   });
 }

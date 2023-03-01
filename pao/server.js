@@ -56,7 +56,7 @@ inputs.on('connection', function(socket){
   // Listen for orientation data
   socket.on('orientation', function(message) {
     // Data comes in as whatever was sent, including objects
-    console.log("Received orientation: " + message.orientation);
+    //console.log("Received orientation: " + message.orientation);
 
     // Send it to all of the output clients
     outputs.emit('orientation', message);
@@ -65,7 +65,7 @@ inputs.on('connection', function(socket){
   // Listen for level data
   socket.on('level', function(message) {
     // Data comes in as whatever was sent, including objects
-    console.log("Received level: " + message.level);
+    //console.log("Received level: " + message.level);
 
     // Send it to all of the output clients
     outputs.emit('level', message);
@@ -94,6 +94,7 @@ outputs.on('connection', function(socket){
 
   // Listen for orientation data
   socket.on('interval', function(message) {
+
     // Data comes in as whatever was sent, including objects
     //console.log("Received: 'message' " + data);
 
@@ -101,8 +102,17 @@ outputs.on('connection', function(socket){
     io.emit('interval', message);
   });
 
-  socket.on('only change rate', function(data){
-    io.emit('only change rate', data);
+  // Tell everyone mode has changed
+  socket.on('only set rate', function(data){
+    console.log("Only set rate:", data);
+    io.emit('only set rate', data);
+    inputs.emit('only set rate', data);
+  });
+
+  socket.on('only set level', function(data){
+    console.log("Only set level:", data);
+    io.emit('only set level', data);
+    inputs.emit('only set level', data);
   });
 
 

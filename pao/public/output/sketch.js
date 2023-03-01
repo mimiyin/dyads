@@ -2,7 +2,7 @@
 let socket = io("/output");
 
 // Listen for confirmation of connection
-socket.on("connect", function () {
+socket.on("connect", function() {
   console.log("Connected");
 });
 
@@ -13,23 +13,24 @@ let users = {};
 let base = 1;
 
 // Intervals
-const INTERVAL_MIN = 30;
-const INTERVAL_MAX = 3 * 60;
+const INTERVAL_MIN = .25;
+const INTERVAL_MAX = 3;
+const QUANTA = 30;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   angleMode(DEGREES);
-  textAlign(CENTER, CENTER);
   rectMode(CENTER);
+  textAlign(LEFT, TOP);
   strokeCap(PROJECT);
 
-  socket.on("idx", function (idx) {
+  socket.on("idx", function(idx) {
     users[idx] = new User(idx);
     console.log("idx joined: ", users);
   });
 
   // Listen for new data
-  socket.on("orientation", function (message) {
+  socket.on("orientation", function(message) {
     let idx = message.idx;
     let o = message.orientation;
 
@@ -38,7 +39,8 @@ function setup() {
   });
 
   // Listen for new data
-  socket.on("level", function (message) {
+  socket.on("level", function(message) {
+
     let idx = message.idx;
     let l = message.level;
 
@@ -47,7 +49,7 @@ function setup() {
   });
 
   // Remove disconnected users
-  socket.on("disconnect", function (id) {
+  socket.on("disconnect", function(id) {
     delete users[id];
   });
 }
@@ -64,13 +66,13 @@ function draw() {
   // Change rate
   textSize(16);
   fill(255);
-  text('Only change (r)ate: ' + onlyChangeRate,  100, 20);
+  text('Only set (r)ate: ' + onlySetRate + '\tOnly set (l)evel: ' + onlySetLevel, 100, 20);
 }
 
 class User {
   constructor(idx) {
     console.log("idx", idx);
-    let x = width * (idx > 0 ? 0.67 : 0.34);
+    let x = width * (idx > 1 ? 0.67 : 0.34);
     let y = height / 2;
     this.loc = createVector(x, y);
     this.diam = 100;
@@ -102,7 +104,7 @@ class User {
     if (abs(ab) < 0.0175) return false;
 
     // Shifted
-    console.log("TURNED");
+    //console.log("TURNED");
 
     // Calculate direction
     // -1 is CCW, 1 is CW
@@ -132,7 +134,7 @@ class User {
     if (r == this.pr) return false;
 
     // New note
-    console.log("NEW NOTE");
+    //console.log("NEW NOTE");
 
     // Calculate crossed
     // Going left and...
@@ -157,17 +159,18 @@ class User {
 
   updateInterval(l) {
     l = constrain(l, 0, 180);
-    let interval = map(l, 0, 180, INTERVAL_MIN, INTERVAL_MAX);
-    // Snap to closes 30 frames
-    // interval /= INTERVAL_MIN;
-    // interval = round(interval);
-    // interval *= INTERVAL_MIN;
+    let interval = map(l, 0, 180, 0, 24);
+    let q = floor(interval);
+    interval = q / 8;
+    //console.log("L Q I", l, q, interval);
 
-    // Ignore small changes
-    if (abs(interval - this.interval) < INTERVAL_MIN) return false;
+    // // Ignore small changes
+    if (abs(interval - this.interval) < 0.125) return false;
+    //console.log("BASE, INTERVAL: ", l, base, interval);
 
     // Remember for next time
     this.interval = interval;
+
     return true;
   }
 
@@ -177,22 +180,30 @@ class User {
     // Updated Rate
     if (updatedRate) {
       console.log("New note: ", this.rate);
-      socket.emit("rate", { idx : this.idx, rate: this.rate });
+      socket.emit("rate", {
+        idx: this.idx,
+        rate: this.rate
+      });
     }
 
   }
 
   updateLevel(l) {
+    //if(frameCount%30 !== 1) return;
+
     let updatedInterval = this.updateInterval(l);
 
     // Updated Interval
     if (updatedInterval) {
       console.log("New interval: ", this.interval);
-      socket.emit("interval", { idx : this.idx, interval: this.interval });
+      socket.emit("interval", {
+        idx: this.idx,
+        interval: this.interval
+      });
     }
   }
 
-  update(o,l) {
+  update(o, l) {
     this.updateOrientation(o);
     this.updateLevel(l);
   }
@@ -203,14 +214,19 @@ class User {
   }
 }
 
-let onlyChangeRate = true;
+let onlySetRate = true;
+let onlySetLevel = false;
+
 function keyPressed() {
-  switch(key) {
+  switch (key) {
     case 'r':
-      onlyChangeRate = !onlyChangeRate;
-      socket.emit('only change rate', onlyChangeRate);
+      onlySetRate = !onlySetRate;
+      socket.emit('only set rate', onlySetRate);
+      console.log("Only set rate", onlySetRate);
+      break;
+    case 'l':
+      onlySetLevel = !onlySetLevel;
+      socket.emit('only set level', onlySetLevel);
       break;
   }
-
-
 }

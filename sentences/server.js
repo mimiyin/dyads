@@ -56,7 +56,7 @@ inputs.on('connection', function(socket){
   // Listen for orientation data
   socket.on('strike', function(message) {
     // Data comes in as whatever was sent, including objects
-    console.log("Received strike: " + message.strike);
+    console.log("Received strike: " + message);
 
     // Send it to all of the output clients
     outputs.emit('strike', message);
