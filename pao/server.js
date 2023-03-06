@@ -86,7 +86,7 @@ outputs.on('connection', function(socket){
   // Listen for orientation data
   socket.on('rate', function(message) {
     // Data comes in as whatever was sent, including objects
-    console.log("Received: 'message' " + message.idx, message.rate);
+    //console.log("Received: 'message' " + message.idx, message.rate);
 
     // Send it to all of the output clients
     io.emit('rate', message);
@@ -96,22 +96,26 @@ outputs.on('connection', function(socket){
   socket.on('interval', function(message) {
 
     // Data comes in as whatever was sent, including objects
-    //console.log("Received: 'message' " + data);
+    console.log("Received interval: " + message.interval);
 
-    // Send it to all of the output clients
+    // Send it to all of the player clients
     io.emit('interval', message);
   });
 
-  // Tell everyone mode has changed
+  // Tell player mode has changed
+  socket.on('mode', function(data){
+    console.log("Mode:", data);
+    io.emit('mode', data);
+  });
+
+  // Tell inputs what data to send
   socket.on('only set rate', function(data){
     console.log("Only set rate:", data);
-    io.emit('only set rate', data);
     inputs.emit('only set rate', data);
   });
 
   socket.on('only set level', function(data){
     console.log("Only set level:", data);
-    io.emit('only set level', data);
     inputs.emit('only set level', data);
   });
 

@@ -48,12 +48,14 @@ function setup() {
   socket.on('only set rate', function(data) {
     console.log("ONLY SET RATE", data);
     onlySetRate = data;
+    if(onlySetRate) onlySetLevel = 0; 
   });
 
   // Listen for turning off orientation
   socket.on('only set level', function(data) {
     console.log("ONLY SET LEVEL", data);
     onlySetLevel = data;
+    if(onlySetLevel) onlySetRate = 0;
   });
 }
 

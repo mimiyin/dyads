@@ -13,9 +13,13 @@ let users = {};
 let base = 1;
 
 // Intervals
-const INTERVAL_MIN = .25;
-const INTERVAL_MAX = 3;
-const QUANTA = 30;
+let interval_max = 3;
+let quanta = 2; // 2 or 8
+
+// Mode
+let mode = 0;
+let onlySetRate = 0;
+let onlySetLevel = 0;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -66,7 +70,7 @@ function draw() {
   // Change rate
   textSize(16);
   fill(255);
-  text('Only set (r)ate: ' + onlySetRate + '\tOnly set (l)evel: ' + onlySetLevel, 100, 20);
+  text('Mode(123): ' + mode + '\tOnly set (r)ate: ' + onlySetRate + '\tOnly set (l)evel: ' + onlySetLevel, 100, 20);
 }
 
 class User {
@@ -159,17 +163,23 @@ class User {
 
   updateInterval(l) {
     l = constrain(l, 0, 180);
-    let interval = map(l, 0, 180, 0, 24);
-    let q = floor(interval);
-    interval = q / 8;
+    let q = map(l, 0, 180, 0, quanta);
+    q = floor(q);
+    let interval = (q * interval_max) / quanta;
+
+    // Don't go under 0.25
+    if(interval < interval_max / quanta) interval = interval_max / quanta;
     //console.log("L Q I", l, q, interval);
 
+    console.log("INTERVAL", interval);
+
     // // Ignore small changes
-    if (abs(interval - this.interval) < 0.125) return false;
+    if (abs(interval - this.interval) < (interval_max / quanta)) return false;
     //console.log("BASE, INTERVAL: ", l, base, interval);
 
     // Remember for next time
     this.interval = interval;
+    //console.log("CALC: " + interval_max, quanta);
 
     return true;
   }
@@ -179,7 +189,7 @@ class User {
 
     // Updated Rate
     if (updatedRate) {
-      console.log("New note: ", this.rate);
+      //console.log("New note: ", this.rate);
       socket.emit("rate", {
         idx: this.idx,
         rate: this.rate
@@ -214,19 +224,35 @@ class User {
   }
 }
 
-let onlySetRate = true;
-let onlySetLevel = false;
-
 function keyPressed() {
-  switch (key) {
-    case 'r':
-      onlySetRate = !onlySetRate;
-      socket.emit('only set rate', onlySetRate);
-      console.log("Only set rate", onlySetRate);
-      break;
-    case 'l':
-      onlySetLevel = !onlySetLevel;
-      socket.emit('only set level', onlySetLevel);
-      break;
+
+  // Assign a mode
+  if (key == 1 || key == 2 || key == 3) {
+    mode = key;
+    socket.emit('mode', key);
   }
+
+  switch (key) {
+    case '1':
+      socket.emit('only set rate', 1);
+      onlySetRate = 1;
+      onlySetLevel = 0;
+      break;
+    case '2':
+      socket.emit('only set rate', 0);
+      onlySetRate = 0;
+      onlySetLevel = 0;
+      interval_max = 6;
+      quanta = 2;
+      break;
+    case '3':
+      socket.emit('only set level', 1);
+      onlySetRate = 0;
+      onlySetLevel = 1;
+      interval_max = 3;
+      quanta = 8;
+      break;
+
+  }
+
 }
