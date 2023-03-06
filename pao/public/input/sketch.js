@@ -1,58 +1,14 @@
 // Asking for permision for motion sensors on iOS 13+ devices
 if (typeof DeviceOrientationEvent.requestPermission === "function") {
   document.body.addEventListener("click", function() {
-    console.log("Absolute", DeviceOrientation.absolute);
     DeviceOrientationEvent.requestPermission();
     DeviceMotionEvent.requestPermission();
   });
 }
 
-// const sensorAbs = new AbsoluteOrientationSensor();
-// sensorAbs.onreading = (e) => {
-//   console.log("ABSOLUTE");
-//   torus.quaternion.fromArray(sensorAbs.quaternion);
-//   socket.emit("orientation", {
-//     idx: idx,
-//     orientation: e
-//   });
-// }
-// sensorAbs.start();
-
-let magSensor = false;
-try {
-  magSensor = new Magnetometer({
-    frequency: 60
-  });
-
-  magSensor.addEventListener('reading', (e) => {
-    rotZ = magSensor.y;
-    socket.emit("orientation", {
-      idx: idx,
-      orientation: rotZ
-    });
-    console.log(`Magnetic field along the X-axis ${magSensor.x}`);
-    console.log(`Magnetic field along the Y-axis ${magSensor.y}`);
-    console.log(`Magnetic field along the Z-axis ${magSensor.z}`);
-  });
-  magSensor.start();
-} catch (e) {
-  console.log("No magnetometer.")
-}
-
-// let magSensor = new Magnetometer({frequency: 60});
-
-// magSensor.addEventListener('reading', (e) => {
-//   console.log(`Magnetic field along the X-axis ${magSensor.x}`);
-//   console.log(`Magnetic field along the Y-axis ${magSensor.y}`);
-//   console.log(`Magnetic field along the Z-axis ${magSensor.z}`);
-// });
-// magSensor.start();
-
 // Get orientation
 let rotZ = 0;
 let rotX = 0;
-
-console.log("HELLO");
 
 // Open and connect input socket
 let socket = io("/input");
@@ -111,7 +67,7 @@ function draw() {
   // Draw all the notes in the diatonic scale
 
   // Re-orient to top
-  if(!magSensor) rotZ = rotationZ;
+  rotZ = rotationZ;
   rotX = rotationX + 90;
 
   push();
