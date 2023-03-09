@@ -4,6 +4,12 @@ let socket = io("/output");
 // Listen for confirmation of connection
 socket.on("connect", function() {
   console.log("Connected");
+
+  // Sync mode
+  socket.on('mode', function(_mode) {
+    console.log("MODE: ", mode)
+    mode = _mode;
+  });
 });
 
 // Keep track of users
@@ -15,6 +21,10 @@ let base = 1;
 // Intervals
 let interval_max = 3;
 let quanta = 2; // 2 or 8
+
+const RATE_DELAY = 500;
+const ANGLE_MIN = 30;
+const ANGLE_MAX = 180;
 
 // Mode
 let mode = 0;
@@ -39,7 +49,8 @@ function setup() {
     let o = message.orientation;
 
     let user = users[idx];
-    if (user) user.updateOrientation(o);
+    if (!user) users[idx] = new User(idx);
+    user.updateOrientation(o);
   });
 
   // Listen for new data
@@ -49,7 +60,8 @@ function setup() {
     let l = message.level;
 
     let user = users[idx];
-    if (user) user.updateLevel(l);
+    if (!user) users[idx] = new User(idx);
+    user.updateLevel(l);
   });
 
   // Remove disconnected users
@@ -89,6 +101,8 @@ class User {
     this.interval = 1;
     this.rate = 1;
     this.update(90, 90);
+    this.go = true;
+    this.timeout = null;
   }
 
   run() {
@@ -163,12 +177,19 @@ class User {
 
   updateInterval(l) {
     l = constrain(l, 0, 180);
-    let q = map(l, 0, 180, 0, quanta);
+    let q = map(l, ANGLE_MIN, ANGLE_MAX, 0, quanta);
     q = floor(q);
     let interval = (q * interval_max) / quanta;
 
     // Don't go under 0.25
-    if(interval < interval_max / quanta) interval = interval_max / quanta;
+    if (interval < interval_max / quanta) interval = interval_max / quanta;
+
+    // Special case for mode 2
+    if (mode == 2) {
+      if (q < 2) interval = 2;
+      else interval = 5.75;
+    }
+
     //console.log("L Q I", l, q, interval);
 
     console.log("INTERVAL", interval);
@@ -189,11 +210,16 @@ class User {
 
     // Updated Rate
     if (updatedRate) {
-      //console.log("New note: ", this.rate);
-      socket.emit("rate", {
-        idx: this.idx,
-        rate: this.rate
-      });
+      console.log("New note: ", this.rate);
+      //clearTimeout(this.timeout);
+      // Play interval in 1 second
+      this.timeout = setTimeout(() => {
+        console.log("EMITTING: ", this.rate);
+        socket.emit("rate", {
+          idx: this.idx,
+          rate: this.rate
+        });
+      }, RATE_DELAY);
     }
 
   }
@@ -234,19 +260,16 @@ function keyPressed() {
 
   switch (key) {
     case '1':
-      socket.emit('only set rate', 1);
       onlySetRate = 1;
       onlySetLevel = 0;
       break;
     case '2':
-      socket.emit('only set rate', 0);
       onlySetRate = 0;
       onlySetLevel = 0;
-      interval_max = 6;
+      interval_max = 5.5;
       quanta = 2;
       break;
     case '3':
-      socket.emit('only set level', 1);
       onlySetRate = 0;
       onlySetLevel = 1;
       interval_max = 3;

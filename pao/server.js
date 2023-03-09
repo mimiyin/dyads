@@ -9,8 +9,14 @@ const cert = fs.readFileSync('./cert.pem');
 const express = require('express');
 const app = express();
 
+// Tell server where to look for files
+app.use(express.static('public'));
+
 // Make a web application server!
-let server = require('https').createServer({key: key, cert: cert }, app).listen(PORT, function () {
+let server = require('https').createServer({
+  key: key,
+  cert: cert
+}, app).listen(PORT, function() {
   console.log('Server listening at port: ', PORT);
 });
 
@@ -23,12 +29,14 @@ let io = require('socket.io')(server, {
   }
 });
 
-// Tell server where to look for files
-app.use(express.static('public'));
+let mode = 0;
 
 // Listen for output clients to connect
-io.on('connection', function(socket){
+io.on('connection', function(socket) {
   console.log('A player client connected: ' + socket.id);
+
+  // Sync up mode
+  socket.emit('mode', mode);
 
   // Listen for this output client to disconnect
   socket.on('disconnect', function() {
@@ -43,8 +51,11 @@ let inputs = io.of('/input');
 let outputs = io.of('/output');
 
 // Listen for input clients to connect
-inputs.on('connection', function(socket){
+inputs.on('connection', function(socket) {
   console.log('An input client connected: ' + socket.id);
+
+  // Tell inputs what data to send
+  update_mode();
 
   // Listen for id
   socket.on('idx', function(idx) {
@@ -80,8 +91,12 @@ inputs.on('connection', function(socket){
 });
 
 // Listen for input clients to connect
-outputs.on('connection', function(socket){
+outputs.on('connection', function(socket) {
   console.log('An output client connected: ' + socket.id);
+  console.log('Mode', mode);
+
+  // Sync up mode
+  socket.emit('mode', mode);
 
   // Listen for orientation data
   socket.on('rate', function(message) {
@@ -103,21 +118,20 @@ outputs.on('connection', function(socket){
   });
 
   // Tell player mode has changed
-  socket.on('mode', function(data){
+  socket.on('mode', function(data) {
     console.log("Mode:", data);
-    io.emit('mode', data);
+
+    // Store the mode
+    mode = data;
+
+    // Tell player client about mode
+    io.emit('mode', mode);
+
+    // Tell inputs what data to send
+    update_mode();
   });
 
-  // Tell inputs what data to send
-  socket.on('only set rate', function(data){
-    console.log("Only set rate:", data);
-    inputs.emit('only set rate', data);
-  });
 
-  socket.on('only set level', function(data){
-    console.log("Only set level:", data);
-    inputs.emit('only set level', data);
-  });
 
 
   // Listen for this input client to disconnect
@@ -127,3 +141,27 @@ outputs.on('connection', function(socket){
     io.emit('disconnected', socket.side);
   });
 });
+
+// Tell inputs what data to send
+function update_mode() {
+  let only_set_rate = 0;
+  let only_set_level = 0;
+
+  switch (mode) {
+    case '1':
+      only_set_rate = 1;
+      only_set_level = 0;
+      break;
+    case '2':
+      only_set_rate = 0;
+      only_set_level = 0;
+      break;
+    case '3':
+      only_set_rate = 0;
+      only_set_level = 1;
+      break;
+  }
+  
+  inputs.emit('only set rate', only_set_rate);
+  inputs.emit('only set level', only_set_level);
+}

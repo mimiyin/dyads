@@ -2,32 +2,69 @@
 let socket = io("/output");
 
 // Listen for confirmation of connection
-socket.on("connect", function () {
+socket.on("connect", function() {
   console.log("Connected");
 });
 
 // Keep track of users
 let users = {};
+const VOICES = ['Victoria', 'Alex'];
 
 // Pause between
-const INTERVAL = 1000;
+const STRIKE_DELAY = 500;
+
+// speech
+let strikeIdx = 0;
+
+// Array of words
+let words = {
+  1 : [],
+  2 : []
+};
+
+// Which word set are we on?
+let w = 0;
+let word = '';
+
+let speech = new p5.Speech(); // speech synthesis object
+
+function preload() {
+  loadStrings('1.txt', process);
+  loadStrings('2.txt', process);
+}
+
+function process(lines) {
+  let idx = lines[0];
+  console.log(idx);
+  for (let l in lines) {
+    if(l == 0) continue;
+    let line = lines[l];
+    if(line == '') continue;
+    let tokens = splitTokens(line);
+    words[idx].push(tokens);
+  }
+  console.log(words);
+}
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
+  // let voices = speech.listVoices();
+  // console.log(voices, voices.length);
+  //speech.setVoice('Google português do Brasil');
 
-  socket.on("idx", function (idx) {
+  socket.on("idx", function(idx) {
     users[idx] = new User(idx);
     console.log("idx joined: ", users);
   });
 
   // Listen for new data
-  socket.on("strike", function (idx) {
+  socket.on("strike", function(idx) {
     let user = users[idx];
     if (user) user.strike(idx);
   });
 
   // Remove disconnected users
-  socket.on("disconnect", function (id) {
+  socket.on("disconnect", function(id) {
     delete users[id];
   });
 }
@@ -41,6 +78,10 @@ function draw() {
     user.run();
   }
 
+  textSize(64);
+  textAlign(CENTER, CENTER);
+  fill(255);
+  text(w + ': ' + word, width/2, 100);
 }
 
 class User {
@@ -62,17 +103,16 @@ class User {
 
   strike(idx) {
     this.idx = idx;
-    if(this.go) {
-      // 1-3, 4-6 (2*2, 2*3)
-      let bottom = this.idx * this.idx;
-      let top = this.idx * 3 + 1;
-      let strikeIdx = floor(random(bottom, top));
-      console.log("STRIKE", idx, bottom, top, strikeIdx);
-      socket.emit('strike', strikeIdx);
+    if (this.go) {
+      word = random(words[idx][w]);
+      console.log("STRIKE", idx, word);
+      // speech.setVoice(VOICES[int(idx)-1]);
+      // speech.speak(word); // say something
+      socket.emit('speak', {idx : idx, word: word});
       this.go = false;
-      setTimeout(()=>{
+      setTimeout(() => {
         this.go = true;
-      }, INTERVAL);
+      }, STRIKE_DELAY);
 
     }
   }
@@ -85,7 +125,28 @@ class User {
 
 }
 
+function mousePressed() {
+  speech.setVoice('Victoria');
+  speech.speak(random(['hello', 'goodbye', 'forever', 'woof']));
+}
+
 // Manual mode
 function keyPressed() {
-  socket.emit('strike', key);
+
+  switch(key) {
+    case 's':
+      socket.emit('strike', key);
+      break;
+  }
+
+  switch(keyCode) {
+    case RIGHT_ARROW:
+      w++;
+      break;
+    case LEFT_ARROW:
+      w--;
+      break;
+  }
+
+  w = constrain(w, 0, words[1].length);
 }

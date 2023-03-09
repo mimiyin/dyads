@@ -53,9 +53,8 @@ inputs.on('connection', function(socket){
     outputs.emit('idx', socket.idx);
   });
 
-  // Listen for orientation data
+  // Listen for strike data
   socket.on('strike', function(message) {
-    // Data comes in as whatever was sent, including objects
     console.log("Received strike: " + message);
 
     // Send it to all of the output clients
@@ -74,15 +73,12 @@ inputs.on('connection', function(socket){
 outputs.on('connection', function(socket){
   console.log('An output client connected: ' + socket.id);
 
-  // Listen for orientation data
+  // Listen for strike data
   socket.on('strike', function(idx) {
-    // Data comes in as whatever was sent, including objects
-    //console.log("Received: 'message' " + message.idx, message.strike);
 
     // Send it to all of the output clients
     io.emit('strike', idx);
   });
-
 
   // Listen for this input client to disconnect
   // Tell all of the output clients this client disconnected
