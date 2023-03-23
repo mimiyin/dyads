@@ -43,7 +43,7 @@ function process(lines) {
     let tokens = splitTokens(line);
     words[idx].push(tokens);
   }
-  console.log(words);
+  console.log("WORDS", words);
 }
 
 function setup() {
@@ -59,8 +59,9 @@ function setup() {
 
   // Listen for new data
   socket.on("strike", function(idx) {
+    if (!(idx in users)) users[idx] = new User(idx);
     let user = users[idx];
-    if (user) user.strike(idx);
+    user.strike(idx);
   });
 
   // Remove disconnected users
@@ -86,8 +87,6 @@ function draw() {
 
 class User {
   constructor(idx) {
-    console.log("idx", idx);
-
     let x = width * (idx > 1 ? 0.67 : 0.34);
     let y = height / 2;
     this.loc = createVector(x, y);
@@ -104,12 +103,12 @@ class User {
   strike(idx) {
     this.idx = idx;
     if (this.go) {
-      word = random(words[idx][w]);
-      console.log("STRIKE", idx, word);
-      // speech.setVoice(VOICES[int(idx)-1]);
-      // speech.speak(word); // say something
-      socket.emit('speak', {idx : idx, word: word});
       this.go = false;
+      word = random(words[idx][w]);
+      console.log("STRIKE", frameCount, this.go, idx, word);
+      speech.setVoice(VOICES[int(idx)-1]);
+      speech.speak(word); // say something
+      //socket.emit('speak', {idx : idx, word: word});
       setTimeout(() => {
         this.go = true;
       }, STRIKE_DELAY);
@@ -135,7 +134,7 @@ function keyPressed() {
 
   switch(key) {
     case 's':
-      socket.emit('strike', key);
+      socket.emit('strike', {idx : 1, word: random(['yes1', 'probably1', 'yes2', 'maybe1']) });
       break;
   }
 

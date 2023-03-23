@@ -103,7 +103,7 @@ function draw() {
   if (!onlySetLevel) {
     socket.emit("orientation", {
       idx: idx,
-      orientation: rotZ
+      o: rotZ
     });
   }
 
@@ -111,7 +111,7 @@ function draw() {
   if (!onlySetRate) {
     socket.emit("level", {
       idx: idx,
-      level: rotX
+      l: rotX
     });
   }
   pop();
@@ -132,7 +132,7 @@ function keyPressed() {
       if (auto_o) o_int = setInterval(() => {
         socket.emit("orientation", {
           idx: idx,
-          orientation: floor(random(360))
+          o: floor(random(360))
         });
       }, 3000);
 
@@ -144,7 +144,7 @@ function keyPressed() {
       l_int = setInterval(() => {
         socket.emit("level", {
           idx: idx,
-          level: floor(random(180))
+          l: floor(random(180))
         });
       }, 5000);
   }
@@ -153,6 +153,6 @@ function keyPressed() {
 function mouseDragged() {
   socket.emit("level", {
     idx: idx,
-    level: 180 * mouseY / height
+    l: 180 * mouseY / height
   });
 }

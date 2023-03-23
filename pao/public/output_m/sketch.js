@@ -177,7 +177,7 @@ class User {
 
     //if(this.rate < 2) console.log("NEW O", o);
     // Remap orientation
-    o = map(o, -180, 180, 0, 360);
+    //o = map(o, -180, 180, 0, 360);
 
     //console.log("OFF", round(o), this.offset);
     // Re-center orientation
@@ -288,7 +288,7 @@ class User {
   updateInterval(l) {
 
     // Re-map level
-    l = map(l, -90, 90, 0, 180);
+    //l = map(l, -90, 90, 0, 180);
     l = constrain(l, 0, 180);
     let q = map(l, ANGLE_MIN, ANGLE_MAX, 0, quanta);
     q = floor(q);

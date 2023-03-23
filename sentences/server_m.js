@@ -1,18 +1,25 @@
 // Create server
 const PORT = process.env.PORT || 8001;
 
+// Get SSL stuff
+const fs = require('fs');
+const key = fs.readFileSync('./key.pem');
+const cert = fs.readFileSync('./cert.pem');
+
 const express = require('express');
 const app = express();
 
 // Make a web application server!
-let server = require('http').createServer(app).listen(PORT, function () {
+let server = require('https').createServer({key: key, cert: cert }, app).listen(PORT, function () {
   console.log('Server listening at port: ', PORT);
 });
 
 // Create socket server
 let io = require('socket.io')(server, {
   cors: {
-    origin: true
+    origin: "http://localhost:" + PORT,
+    methods: ["GET", "POST"],
+    credentials: false
   },
   allowEIO3: true
 });
@@ -20,17 +27,9 @@ let io = require('socket.io')(server, {
 // Tell server where to look for files
 app.use(express.static('public'));
 
-let data_rate = 10000;
-let sample_rate = 20;
-let strike_th = 10;
 // Listen for output clients to connect
 io.on('connection', function(socket){
   console.log('A player or board client connected: ' + socket.id);
-
-  // Set board settings
-  socket.emit('set_data_rate', data_rate);
-  socket.emit('set_sample_rate', sample_rate);
-  socket.emit('set_strike_th', strike_th);
 
   // Listen for id
   socket.on('idx', function(idx) {
@@ -40,12 +39,13 @@ io.on('connection', function(socket){
   });
 
   // Listen for strike data
-  socket.on('message', function(message) {
-    console.log("Received data:", message.idx, message.da);
+    socket.on('strike', function(message) {
+      // Data comes in as whatever was sent, including objects
+      console.log("Received strike: " + message);
 
-    // Send it to all of the output clients
-    outputs.emit('strike', message.idx);
-  });
+      // Send it to all of the output clients
+      outputs.emit('strike', message);
+    });
 
   // Listen for this output client to disconnect
   socket.on('disconnect', function() {

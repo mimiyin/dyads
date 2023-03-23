@@ -36,6 +36,7 @@ let io = require('socket.io')(server, {
 let mode = 0;
 let data_rate = 200;
 let sample_rate = 20;
+let strike_th = 0.2;
 
 // Listen for output clients to connect
 io.on('connection', function(socket) {
@@ -47,6 +48,7 @@ io.on('connection', function(socket) {
   // Set board settings
   socket.emit('set_data_rate', data_rate);
   socket.emit('set_sample_rate', sample_rate);
+  socket.emit('set_strike_th', strike_th);
 
   // Tell inputs what data to send
   update_mode();
@@ -63,21 +65,19 @@ io.on('connection', function(socket) {
     // Data comes in as whatever was sent, including objects
     message.o += 180;
     console.log("Received message: " + message.yaw, message.pitch, message.roll);
-    //console.log()
 
-    // let o = 0;
-    // if(message.pitch > 45 || message.pitch < -45) o = message.roll
-    // else o = message.yaw;
 
     let o_message = {
       idx : message.idx,
-      o : message.yaw
+      o : message.roll,
     }
 
     let l_message = {
       idx : message.idx,
       l : message.pitch,
     }
+
+    outputs.emit('message', message)
 
     // Send it to all of the output clients
     if(mode < 2) outputs.emit('orientation', o_message);

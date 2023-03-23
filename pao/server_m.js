@@ -2,9 +2,9 @@
 const PORT = process.env.PORT || 8001;
 
 // Get SSL stuff
-// const fs = require('fs');
-// const key = fs.readFileSync('./key.pem');
-// const cert = fs.readFileSync('./cert.pem');
+const fs = require('fs');
+const key = fs.readFileSync('./key.pem');
+const cert = fs.readFileSync('./cert.pem');
 
 const express = require('express');
 const app = express();
@@ -13,40 +13,47 @@ const app = express();
 app.use(express.static('public'));
 
 // Make a web application server!
-// let server = require('https').createServer({
-//   key: key,
-//   cert: cert
-// }, app).listen(PORT, function() {
-//   console.log('Server listening at port: ', PORT);
-// });
-
-let server = require('http').createServer(app).listen(PORT, function() {
+let server = require('https').createServer({
+  key: key,
+  cert: cert
+}, app).listen(PORT, function() {
   console.log('Server listening at port: ', PORT);
 });
 
 // Create socket server
 let io = require('socket.io')(server, {
   cors: {
-    origin: true
+    origin: "http://localhost:" + PORT,
+    methods: ["GET", "POST"],
+    credentials: false
   },
   allowEIO3: true
 });
 
-// Local variables
 let mode = 0;
-let data_rate = 200;
-let sample_rate = 20;
 
 // Listen for output clients to connect
 io.on('connection', function(socket) {
-  console.log('A player or board client connected: ' + socket.id);
+  console.log('A player client connected: ' + socket.id);
 
   // Sync up mode
   socket.emit('mode', mode);
 
-  // Set board settings
-  socket.emit('set_data_rate', data_rate);
-  socket.emit('set_sample_rate', sample_rate);
+  // Listen for this output client to disconnect
+  socket.on('disconnect', function() {
+    console.log("A player client has disconnected " + socket.id);
+  });
+});
+
+// Clients in the input namespace
+let inputs = io.of('/input');
+
+// Clients in the output namespace
+let outputs = io.of('/output');
+
+// Listen for input clients to connect
+inputs.on('connection', function(socket) {
+  console.log('An input client connected: ' + socket.id);
 
   // Tell inputs what data to send
   update_mode();
@@ -59,42 +66,30 @@ io.on('connection', function(socket) {
   });
 
   // Listen for orientation data
-  socket.on('message', function(message) {
+  socket.on('orientation', function(message) {
     // Data comes in as whatever was sent, including objects
-    message.o += 180;
-    console.log("Received message: " + message.yaw, message.pitch, message.roll);
-    //console.log()
-
-    // let o = 0;
-    // if(message.pitch > 45 || message.pitch < -45) o = message.roll
-    // else o = message.yaw;
-
-    let o_message = {
-      idx : message.idx,
-      o : message.yaw
-    }
-
-    let l_message = {
-      idx : message.idx,
-      l : message.pitch,
-    }
+    //console.log("Received orientation: " + message.orientation);
 
     // Send it to all of the output clients
-    if(mode < 2) outputs.emit('orientation', o_message);
-
-    // Send it to all of the output clients
-    if(mode > 1) outputs.emit('level', l_message);
-
+    outputs.emit('orientation', message);
   });
 
-  // Listen for this output client to disconnect
+  // Listen for level data
+  socket.on('level', function(message) {
+    // Data comes in as whatever was sent, including objects
+    //console.log("Received level: " + message.level);
+
+    // Send it to all of the output clients
+    outputs.emit('level', message);
+  });
+
+  // Listen for this input client to disconnect
+  // Tell all of the output clients this client disconnected
   socket.on('disconnect', function() {
-    console.log("A player or board client has disconnected " + socket.id);
+    console.log("An input client has disconnected " + socket.id);
+    io.emit('disconnected', socket.side);
   });
 });
-
-// Clients in the output namespace
-let outputs = io.of('/output');
 
 // Listen for input clients to connect
 outputs.on('connection', function(socket) {
@@ -117,7 +112,7 @@ outputs.on('connection', function(socket) {
   socket.on('interval', function(message) {
 
     // Data comes in as whatever was sent, including objects
-    console.log("Received interval: " + message.interval);
+    //console.log("Received interval: " + message.interval);
 
     // Send it to all of the player clients
     io.emit('interval', message);
@@ -130,7 +125,7 @@ outputs.on('connection', function(socket) {
     // Store the mode
     mode = data;
 
-    // Tell player and board clients about mode
+    // Tell player client about mode
     io.emit('mode', mode);
 
     // Tell inputs what data to send
@@ -168,6 +163,6 @@ function update_mode() {
       break;
   }
 
-  io.emit('only set rate', only_set_rate);
-  io.emit('only set level', only_set_level);
+  inputs.emit('only set rate', only_set_rate);
+  inputs.emit('only set level', only_set_level);
 }
