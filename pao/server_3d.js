@@ -64,12 +64,12 @@ io.on('connection', function(socket) {
   socket.on('message', function(message) {
     // Data comes in as whatever was sent, including objects
     message.o += 180;
-    console.log("Received message: " + message.yaw, message.pitch, message.roll);
+    console.log("Received message: " + message.yaw);
 
 
     let o_message = {
       idx : message.idx,
-      o : message.roll,
+      o : message.yaw,
     }
 
     let l_message = {

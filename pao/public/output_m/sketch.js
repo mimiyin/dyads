@@ -28,6 +28,7 @@ const ANGLE_MIN = 30;
 const ANGLE_MAX = 180;
 const INTERVAL_MIN = 0.375
 const O_MARGIN = 0.01;
+const OFFSET = 180;
 
 // Mode
 let mode = 0;
@@ -59,6 +60,7 @@ function setup() {
 
   // Listen for new data
   socket.on("level", function(message) {
+    console.log("NEW LEVEL");
     let idx = message.idx;
     let l = message.l;
 
@@ -99,14 +101,14 @@ class User {
     this.diam = 100;
     this.pl = 90;
     this.pr = 1;
+    this.o = 0;
     this.po = 0;
-    this.offset = 0;
-    this.a = createVector(0, -1);
+    this.offset = OFFSET;
+    this.a = createVector(1, 0);
     this.idx = idx;
     this.base = base;
     this.interval = -1;
     this.rate = 1;
-    this.update(90, 90);
     this.go = true;
     this.r_timeout = null;
     this.l_timeout = null;
@@ -123,27 +125,25 @@ class User {
     this.setBase();
   }
 
-  reset() {
-    console.log("RESET TO: ", this.po);
+  resetOrientation() {
+    console.log("RESET TO: ", this.o);
     // Boink it again
-    this.resetted = true;
-    this.updateOrientation(this.po);
+    this.resetO = true;
+    this.updateOrientation(this.o);
   }
 
   setBase() {
     console.log("RE-BASE TO: ", base);
     this.base = base;
-    this.reset();
+    this.resetOrientation();
   }
 
   setNorth() {
-    // Get pure orientation
-    this.po += this.offset;
 
-    console.log("CALIBRATE TO: ", this.po);
+    console.log("CALIBRATE TO: ", this.o);
 
     // This is new offset
-    this.offset = this.po;
+    this.offset = this.o;
 
     // Reset pitch
     this.setBase();
@@ -179,6 +179,9 @@ class User {
     // Remap orientation
     //o = map(o, -180, 180, 0, 360);
 
+    // Store the current o
+    this.o = o;
+
     //console.log("OFF", round(o), this.offset);
     // Re-center orientation
     o -= this.offset + O_MARGIN;
@@ -192,7 +195,7 @@ class User {
     this.po = o;
 
     // Calibrated?
-    if (this.resetted) {
+    if (this.resetO) {
 
       let r = this.mapRate(o);
 
@@ -202,10 +205,8 @@ class User {
       // Remember for next time
       this.pr = r;
 
-      console.log("Resetting to: ", this.base, this.rate, o);
-
       // Set it back
-      this.resetted = false;
+      this.resetO = false;
 
       //console.log("RESET DEBUG: ", this.rate, this.pr, this.po, this.a);
 
@@ -216,7 +217,6 @@ class User {
     let b = createVector(cos(o), sin(o));
     let ab = b.angleBetween(this.a);
     this.a = b;
-
 
     // Ignore minor changes
     if (abs(ab) < 0.0175) {
@@ -257,8 +257,8 @@ class User {
     //console.log("CROSSED", r, this.pr, crossedCCW, crossedCW);
 
     // Calculate rate
-    console.log("BASE: ", this.base);
     this.rate = this.base * r;
+    console.log("BASE | RATE: ", this.base, this.rate, o);
 
     // Remember for next time
     this.pr = r;
@@ -288,7 +288,15 @@ class User {
   updateInterval(l) {
 
     // Re-map level
-    //l = map(l, -90, 90, 0, 180);
+    // -90 to -180, 180 to 90 --> -180 to 0
+    // 90 to -90 --> 0 to 180
+    // if(l < -90 && l >= -180) l = map(l, -90, -180, -180, -90)
+    // else if(l < 180 && l >= 90) l = map(l, 180, 90, -90, 0);
+    // else l = map(l, 90, -90, 0, 180);
+    // // Remove the sign
+    // l = abs(l);
+    //
+    // l = map(l, 180, 0, 0, 180);
     l = constrain(l, 0, 180);
     let q = map(l, ANGLE_MIN, ANGLE_MAX, 0, quanta);
     q = floor(q);
@@ -343,11 +351,6 @@ class User {
     }
   }
 
-  update(o, l) {
-    this.updateOrientation(o);
-    this.updateLevel(l);
-  }
-
   display() {
     fill("red");
     ellipse(this.loc.x, this.loc.y, this.diam, this.diam);
@@ -381,10 +384,10 @@ function keyPressed() {
     socket.emit('mode', key);
     changeMode();
   } else if (key == 'c') {
-    for (let u in users) {
-      let user = users[u];
-      user.setNorth();
-    }
+    // for (let u in users) {
+    //   let user = users[u];
+    //   user.setNorth();
+    // }
   }
 }
 

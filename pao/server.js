@@ -33,7 +33,7 @@ let io = require('socket.io')(server, {
 });
 
 // Local variables
-let mode = 0;
+let mode = 1;
 let data_rate = 200;
 let sample_rate = 20;
 
@@ -61,8 +61,8 @@ io.on('connection', function(socket) {
   // Listen for orientation data
   socket.on('message', function(message) {
     // Data comes in as whatever was sent, including objects
-    message.o += 180;
-    console.log("Received message: " + message.yaw, message.pitch, message.roll);
+    //message.o += 180;
+    if(message.idx == 2) console.log("Received message: " + message.idx, message.yaw);
     //console.log()
 
     // let o = 0;
@@ -76,11 +76,13 @@ io.on('connection', function(socket) {
 
     let l_message = {
       idx : message.idx,
-      l : message.pitch,
+      l : message.roll,
     }
 
+    //outputs.emit('message', message);
+
     // Send it to all of the output clients
-    if(mode < 2) outputs.emit('orientation', o_message);
+    if(mode <= 2) outputs.emit('orientation', o_message);
 
     // Send it to all of the output clients
     if(mode > 1) outputs.emit('level', l_message);

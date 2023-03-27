@@ -8,6 +8,8 @@ let roll=0;
 
 let r,g,b=0;
 
+socket.on('connect', ()=>{ console.log("Connected!")});
+
 function setup() {
   createCanvas(windowWidth, windowHeight,WEBGL);
   fill(200);
@@ -17,19 +19,20 @@ function setup() {
 function draw() {
   background(r,g,b);
   push();
-  // rotateY(yaw);
   rotateX(pitch);
-  rotateY(roll);
-  box(60,100,20);
+  rotateY(yaw);
+  rotateZ(roll);
+  box(60,20,100);
   pop();
 }
 
 //
 socket.on("message", function (data) {
+  console.log("message", data.l);
   //if(data.idx==2){
     yaw=data.yaw;
-    pitch=data.pitch;
-    roll=data.roll;
+    pitch=data.l;
+    roll=data.o;
     // console.log(pitch);
   //}
 
