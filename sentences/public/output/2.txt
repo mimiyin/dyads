@@ -4,11 +4,12 @@ yes no
 maybe probably possibly
 need want know think
 this that
-did didn’t don’t won’t will will not or or or
-yes no
+did didn’t don’t won’t will will not or or or nor nor nor
+or
 yes no
 yes no
 all want
-see smell hear feel
-love don't
-do
+I you
+need
+yes no
+no

@@ -29,14 +29,22 @@ const ANGLE_MAX = 180;
 const INTERVAL_MIN = 0.375
 const O_MARGIN = 0.01;
 
-// Test OFFSET
-const OFFSETS = { 1 : 130, 2 : 80 };
-const RATES = { 1 : 0.5, 2 : 1 };
+// Make DO the new North
+const OFFSETS = {
+  1: 30,
+  2: 0
+};
+// Pitches for Rhythm
+const RATES = {
+  1: 0.83333,
+  2: 1
+};
 
 // Mode
 let mode = 1;
 let onlySetRate = 0;
 let onlySetLevel = 0;
+let start = false;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -88,7 +96,7 @@ function draw() {
   // Change rate
   textSize(16);
   fill(255);
-  text('Base: ' + base + '\t(C)alibrate \tMode(123): ' + mode + '\tOnly set (r)ate: ' + onlySetRate + '\tOnly set (l)evel: ' + onlySetLevel, 100, 20);
+  text('(S)tart/(S)top + \t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly set (r)ate: ' + onlySetRate + '\tOnly set (l)evel: ' + onlySetLevel, 100, 20);
 }
 
 class User {
@@ -187,6 +195,7 @@ class User {
     //console.log("OFF", round(o), this.offset);
     // Re-center orientation
     o -= this.offset + O_MARGIN;
+    console.log("UPDATE OFFSET: ", this.offset);
 
     // Wrap around
     if (o < 0) {
@@ -237,11 +246,11 @@ class User {
 
     let r = this.mapRate(o);
 
-    // // Ignore no change in note
-    // if (r == this.pr) {
-    //   //console.log("Did not change notes.");
-    //   return false;
-    // }
+    // Ignore no change in note
+    if (r == this.pr) {
+      console.log("Did not change notes.");
+      return false;
+    }
 
     // New note
     //console.log("NEW NOTE");
@@ -263,14 +272,12 @@ class User {
 
     // Calculate rate
     this.rate = this.base * r;
-    console.log("BASE | RATE: ", this.base, this.rate, o);
+    console.log("BASE | RATE: ", nfs(this.base, 0, 2), nfs(this.rate, 0, 2), nfs(o, 0, 2));
 
-    if(abs(this.rate - this.prate) < 0.01) return false;
+    if (abs(this.rate - this.prate) < 0.01) return false;
 
     // Remember rate for next time
     this.prate = this.rate;
-
-
 
     return true;
   }
@@ -280,11 +287,11 @@ class User {
 
     // Updated Rate
     if (updatedRate) {
-      console.log("New note: ", this.rate);
+      console.log("New note: ", nfs(this.rate, 0, 2));
       //clearTimeout(this.timeout);
       // Play interval in 1 second
       this.r_timeout = setTimeout(() => {
-        console.log("EMITTING RATE: ", this.rate);
+        console.log("EMITTING RATE: ", nfs(this.rate, 0, 2));
         this.setRate(this.rate);
       }, PITCH_DELAY);
     }
@@ -296,8 +303,11 @@ class User {
     // Re-map level
     // -90 to -180, 180 to 90 --> -180 to 0
     // 90 to -90 --> 0 to 180
-    if(l < -90 && l >= -180) l = map(l, -90, -180, -180, -90)
-    else if(l < 180 && l >= 90) l = map(l, 180, 90, -90, 0);
+    // Toes --> Hips
+    if (l < -90 && l >= -180) l = map(l, -90, -180, -180, -90)
+    // Head --> Hips
+    else if (l >= 90 && l < 180) l = map(l, 180, 90, -90, 0);
+    // Backside
     else l = map(l, 90, -90, 0, 180);
     // Remove the sign
     l = abs(l);
@@ -378,13 +388,28 @@ function keyPressed() {
 
   switch (keyCode) {
     case RIGHT_ARROW:
+      users[1].move(1);
+      break;
+    case LEFT_ARROW:
+      users[1].move(-1);
+      break;
+    case UP_ARROW:
+      users[2].move(1);
+      break;
+    case RIGHT_ARROW:
+      users[2].move(-1);
+      break;
+  }
+
+  switch (key) {
+    case 'b':
       base *= 2;
       for (let u in users) {
         let user = users[u];
         user.setBase();
       }
       break;
-    case LEFT_ARROW:
+    case 'v':
       base /= 2;
       for (let u in users) {
         let user = users[u];
@@ -400,11 +425,9 @@ function keyPressed() {
     mode = key;
     socket.emit('mode', key);
     changeMode();
-  } else if (key == 'c') {
-    // for (let u in users) {
-    //   let user = users[u];
-    //   user.setNorth();
-    // }
+  } else if (key == 's') {
+    start = !start;
+    socket.emit(start ? 'stop' : 'start');
   }
 }
 

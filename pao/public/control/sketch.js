@@ -1,14 +1,8 @@
-// Asking for permision for motion sensors on iOS 13+ devices
-// if (typeof DeviceOrientationEvent.requestPermission === "function") {
-//   document.body.addEventListener("click", function() {
-//     DeviceOrientationEvent.requestPermission();
-//     DeviceMotionEvent.requestPermission();
-//   });
-// }
-
 // Get orientation
 let rotZ = 0;
-let rotX = 0;
+let rotX = 180;
+// Current angle
+let a = 0;
 
 // Open and connect input socket
 let socket = io("/input");
@@ -65,15 +59,11 @@ function draw() {
 
   // Draw from the center
   translate(width / 2, height / 2);
+  rotate(180);
 
   // Draw all the notes in the diatonic scale
 
-  // Re-orient to top
-  rotZ = rotationZ;
-  rotX = rotationX + 90;
-
   push();
-  rotate(rotZ);
   for (let r = 0; r < ratios.length; r++) {
     let rat = ratios[r];
     let angle = map(rat.num / rat.den, 1, 2, -90, 270);
@@ -88,31 +78,72 @@ function draw() {
   pop();
 
   push();
-  rotate(rotationX);
+  rotate(rotX);
   stroke(onlySetLevel ? "yellow" : "orange");
   strokeWeight(20);
-  line(0, 0, diag / 2, 0);
+  line(0, 0, 0, -diag / 2);
   pop();
 
   push();
+  rotate(rotZ);
   stroke(onlySetRate ? "red" : "blue");
   strokeWeight(20);
   line(0, 0, 0, -diag / 2);
+  pop();
+}
 
+function emitOrientation() {
+  console.log("O", rotZ);
   // Send my pitch data
   if (!onlySetLevel) {
     socket.emit("orientation", {
       idx: idx,
-      o: rotZ
+      o: 360-rotZ
     });
   }
+}
 
+function emitLevel() {
+  console.log("L", rotX, onlySetRate);
   // Send level data
   if (!onlySetRate) {
     socket.emit("level", {
       idx: idx,
-      l: rotX
+      l: (450-rotX)%360
     });
   }
-  pop();
+}
+
+function keyPressed() {
+  let sendO = false;
+  let sendL = false;
+  switch (keyCode) {
+    case RIGHT_ARROW:
+      a++;
+      sendO = true;
+      break;
+    case LEFT_ARROW:
+      a--;
+      sendO = true;
+      break;
+    case UP_ARROW:
+      rotX -= 10;
+      sendL = true;
+      break;
+    case DOWN_ARROW:
+      rotX += 10;
+      sendL = true;
+      break;
+  }
+  if (sendO) {
+    if (a < 0) a = angles.length - 1;
+    else if (a > angles.length - 1) a = 0;
+    rotZ = angles[a];
+    emitOrientation();
+  }
+  if (sendL) {
+    if (rotX < 0) rotX = 360 + rotX;
+    else if (rotX > 360) rotX = rotX - 360;
+    emitLevel();
+  }
 }

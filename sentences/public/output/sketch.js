@@ -83,6 +83,12 @@ function draw() {
   textAlign(CENTER, CENTER);
   fill(255);
   text(w + ': ' + word, width/2, 100);
+
+  textSize(24);
+  textAlign(LEFT, CENTER);
+  text('SHIFT: 1', 10, 50);
+  textAlign(RIGHT, CENTER);
+  text('RETURN: 2', width-10, 50);
 }
 
 class User {
@@ -100,13 +106,12 @@ class User {
     this.display();
   }
 
-  strike(idx) {
-    this.idx = idx;
+  strike() {
     if (this.go) {
       this.go = false;
-      word = random(words[idx][w]);
-      console.log("STRIKE", frameCount, this.go, idx, word);
-      speech.setVoice(VOICES[int(idx)-1]);
+      word = random(words[this.idx][w]);
+      console.log("STRIKE", frameCount, this.go, this.idx, word);
+      speech.setVoice(VOICES[int(this.idx)-1]);
       speech.speak(word); // say something
       //socket.emit('speak', {idx : idx, word: word});
       setTimeout(() => {
@@ -124,21 +129,18 @@ class User {
 
 }
 
-function mousePressed() {
-  speech.setVoice('Victoria');
-  speech.speak(random(['hello', 'goodbye', 'forever', 'woof']));
-}
-
 // Manual mode
 function keyPressed() {
 
-  switch(key) {
-    case 's':
-      socket.emit('strike', {idx : 1, word: random(['yes1', 'probably1', 'yes2', 'maybe1']) });
-      break;
-  }
-
   switch(keyCode) {
+    case SHIFT:
+      if(!users[1]) users[1] = new User(1);
+      users[1].strike();
+      break;
+    case RETURN:
+      if(!users[2]) users[2] = new User(2);
+      users[2].strike();
+      break;
     case RIGHT_ARROW:
       w++;
       break;

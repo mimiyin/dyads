@@ -62,7 +62,7 @@ io.on('connection', function(socket) {
   socket.on('message', function(message) {
     // Data comes in as whatever was sent, including objects
     //message.o += 180;
-    if(message.idx == 2) console.log("Received message: " + message.idx, message.yaw);
+    console.log("Received message: " + message.idx, message.yaw);
     //console.log()
 
     // let o = 0;
@@ -95,8 +95,54 @@ io.on('connection', function(socket) {
   });
 });
 
+// Clients in the input namespace
+let inputs = io.of('/input');
+
 // Clients in the output namespace
 let outputs = io.of('/output');
+
+// Listen for input clients to connect
+inputs.on('connection', function(socket) {
+  console.log('An input client connected: ' + socket.id);
+
+  // Tell inputs what data to send
+  update_mode();
+
+  // Listen for id
+  socket.on('idx', function(idx) {
+    console.log("idx", idx);
+    socket.idx = idx;
+    outputs.emit('idx', socket.idx);
+  });
+
+  // Listen for orientation data
+  socket.on('orientation', function(message) {
+    // Data comes in as whatever was sent, including objects
+
+    // Send it to all of the output clients
+    message.o = message.o - 180;
+    console.log("Received orientation: " + message.o);
+    outputs.emit('orientation', message);
+  });
+
+  // Listen for level data
+  socket.on('level', function(message) {
+    // Data comes in as whatever was sent, including objects
+    //console.log("Received level: " + message.level);
+
+    // Send it to all of the output clients
+    message.l = message.l - 180;
+    console.log("Received level: " + message.l);
+    outputs.emit('level', message);
+  });
+
+  // Listen for this input client to disconnect
+  // Tell all of the output clients this client disconnected
+  socket.on('disconnect', function() {
+    console.log("An input client has disconnected " + socket.id);
+    io.emit('disconnected', socket.side);
+  });
+});
 
 // Listen for input clients to connect
 outputs.on('connection', function(socket) {
@@ -139,8 +185,15 @@ outputs.on('connection', function(socket) {
     update_mode();
   });
 
+  // Stop the music
+  socket.on('stop', function() {
+    io.emit('stop');
+  });
 
-
+  // Start the music
+  socket.on('start', function() {
+    io.emit('start');
+  });
 
   // Listen for this input client to disconnect
   // Tell all of the output clients this client disconnected
@@ -172,4 +225,7 @@ function update_mode() {
 
   io.emit('only set rate', only_set_rate);
   io.emit('only set level', only_set_level);
+  inputs.emit('only set rate', only_set_rate);
+  inputs.emit('only set level', only_set_level);
+
 }

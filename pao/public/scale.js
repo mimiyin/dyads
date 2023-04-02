@@ -24,3 +24,5 @@ let ratios = [{
   num: 2,
   den: 1
 }, ]
+
+let angles = [ 0, 45, 90, 120, 180, 240, 315]

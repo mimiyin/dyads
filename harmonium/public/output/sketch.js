@@ -49,6 +49,7 @@ socket.on("connect", function() {
 function mousePressed() {
   if (soundOn) return;
   getAudioContext().resume();
+  select('p').remove();
   soundOn = true;
 }
 
@@ -174,6 +175,12 @@ function draw() {
     fill(255, 64);
     ellipse(width - counter*40, 10, 20, 20);
   }
+
+  // Display text
+  fill(255);
+  noStroke();
+  textSize(16);
+  text('Press ENTER to release note.', 5, 20);
 }
 
 // Paramaters are tonic index and tonic note.
@@ -231,4 +238,9 @@ function addBalls(num) {
   for (let i = 0; i < num; i++) {
     balls.push(new Ball(random(width), random(height), 20, 20, 0, random(-5, 5), 300 * num));
   }
+}
+
+// Manual mode
+function keyPressed() {
+  if(keyCode == ENTER) addBalls(1);
 }
