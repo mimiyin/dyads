@@ -1,6 +1,6 @@
 // Get orientation
 let rotZ = 0;
-let rotX = 180;
+let rotX = 90;
 // Current angle
 let a = 0;
 
@@ -78,7 +78,8 @@ function draw() {
   pop();
 
   push();
-  rotate(rotX);
+  // Make it go backwards
+  rotate(rotX-270);
   stroke(onlySetLevel ? "yellow" : "orange");
   strokeWeight(20);
   line(0, 0, 0, -diag / 2);
@@ -109,7 +110,7 @@ function emitLevel() {
   if (!onlySetRate) {
     socket.emit("level", {
       idx: idx,
-      l: (450-rotX)%360
+      l: 360-rotX
     });
   }
 }

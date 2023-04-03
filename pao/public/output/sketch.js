@@ -31,7 +31,7 @@ const O_MARGIN = 0.01;
 
 // Make DO the new North
 const OFFSETS = {
-  1: 30,
+  1: 0,
   2: 0
 };
 // Pitches for Rhythm
