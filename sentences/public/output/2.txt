@@ -1,15 +1,13 @@
 2
-yes
 yes no
+yes
 maybe probably possibly
 need want know think
 this that
 did didn’t don’t won’t will will not or or or nor nor nor
 or
-yes no
-yes no
+yes no no no no no no
 all want
-I you
-need
+I need
 yes no
 no

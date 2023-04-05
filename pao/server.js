@@ -37,6 +37,8 @@ let mode = 1;
 let data_rate = 200;
 let sample_rate = 20;
 
+let ohs = { 1: 0, 2 : 0 };
+
 // Listen for output clients to connect
 io.on('connection', function(socket) {
   console.log('A player or board client connected: ' + socket.id);
@@ -61,8 +63,8 @@ io.on('connection', function(socket) {
   // Listen for orientation data
   socket.on('message', function(message) {
     // Data comes in as whatever was sent, including objects
-    //message.o += 180;
-    console.log("Received message: " + message.idx, message.yaw);
+    ohs[message.idx] = message.yaw;
+    console.log("1: " + ohs[1] + "\t2:" + ohs[2]);
     //console.log()
 
     // let o = 0;
@@ -121,7 +123,7 @@ inputs.on('connection', function(socket) {
 
     // Send it to all of the output clients
     message.o = message.o - 180;
-    console.log("Received orientation: " + message.o);
+    message.src = "control";
     outputs.emit('orientation', message);
   });
 

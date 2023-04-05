@@ -20,15 +20,18 @@ let io = require('socket.io')(server, {
 // Tell server where to look for files
 app.use(express.static('public'));
 
-let data_rate = 10000;
+let data_rate = 30000;
+let data_min = 500;
 let sample_rate = 20;
 let strike_th = 10;
+
 // Listen for output clients to connect
 io.on('connection', function(socket){
   console.log('A player or board client connected: ' + socket.id);
 
   // Set board settings
   socket.emit('set_data_rate', data_rate);
+  socket.emit('set_data_min', data_min);
   socket.emit('set_sample_rate', sample_rate);
   socket.emit('set_strike_th', strike_th);
 
@@ -44,7 +47,7 @@ io.on('connection', function(socket){
     console.log("Received data:", message.idx, message.da);
 
     // Send it to all of the output clients
-    outputs.emit('strike', message.idx);
+    if(message.da > strike_th) outputs.emit('strike', message.idx);
   });
 
   // Listen for this output client to disconnect

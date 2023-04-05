@@ -17,7 +17,7 @@ socket.on("connect", function() {
 let users = {};
 
 // Reference point
-let base = 1;
+let base = 0.5;
 
 // Intervals
 let interval_max = 3;
@@ -30,9 +30,14 @@ const INTERVAL_MIN = 0.375
 const O_MARGIN = 0.01;
 
 // Make DO the new North
-const OFFSETS = {
-  1: 0,
-  2: 0
+let B_OFFSETS = {
+  1: 340,
+  2: 75
+};
+
+let offsets = {
+  1: B_OFFSETS[1],
+  2: B_OFFSETS[2]
 };
 // Pitches for Rhythm
 const RATES = {
@@ -62,6 +67,9 @@ function setup() {
   socket.on("orientation", function(message) {
     let idx = message.idx;
     let o = message.o;
+
+    // Do I need to reset offset?
+    offsets[idx] = message.src && message.src == 'control' ? 0 : B_OFFSETS[idx];
 
     if (!(idx in users)) users[idx] = new User(idx);
     let user = users[idx];
@@ -101,26 +109,14 @@ function draw() {
 
 class User {
   constructor(idx) {
-    console.log("idx", idx);
+    console.log("NEW USER: ", idx);
+
+    this.idx = idx;
     let x = width * (idx > 1 ? 0.67 : 0.34);
     let y = height / 2;
     this.loc = createVector(x, y);
     this.diam = 100;
-    this.pl = 90;
-    this.pr = 1;
-    this.o = 0;
-    this.po = 0;
-    this.offset = OFFSETS[idx];
-    this.a = createVector(1, 0);
-    this.idx = idx;
-    this.base = base;
-    this.interval = -1;
-    this.rate = 1;
-    this.prate = 0;
-    this.go = true;
-    this.r_timeout = null;
-    this.l_timeout = null;
-    this.resetted = false;
+    this.init();
   }
 
   run() {
@@ -128,15 +124,29 @@ class User {
   }
 
   init() {
-    this.interval = -1;
-    this.rate = -1;
+    this.offset = offsets[this.idx];
+    this.rate = 1;
+    this.prate = 0;
+    this.pr = 0;
+    this.o = 0 - this.offset;
+    // Starting vector is 270-degrees
+    this.po = 270;
+    this.a = createVector(-1, 0);
+
+    this.r_timeout = null;
     this.setBase();
+
+    // Level stuff
+    this.interval = -1;
+    this.pl = 90;
+    this.l_timeout = null;
+
   }
 
   resetOrientation() {
     console.log("RESET TO: ", this.o);
     // Boink it again
-    this.resetO = true;
+    this.reset_o = true;
     this.updateOrientation(this.o);
   }
 
@@ -195,7 +205,6 @@ class User {
     //console.log("OFF", round(o), this.offset);
     // Re-center orientation
     o -= this.offset + O_MARGIN;
-    console.log("UPDATE OFFSET: ", this.offset);
 
     // Wrap around
     if (o < 0) {
@@ -205,9 +214,8 @@ class User {
     // Remember for next time
     this.po = o;
 
-    // Calibrated?
-    if (this.resetO) {
-
+    // Calibrating?
+    if (this.reset_o) {
       let r = this.mapRate(o);
 
       // Calculate rate
@@ -217,13 +225,14 @@ class User {
       this.pr = r;
 
       // Set it back
-      this.resetO = false;
+      this.reset_o = false;
+
+      console.log("Resetting orientation to: ", nfs(o, 0,2));
 
       //console.log("RESET DEBUG: ", this.rate, this.pr, this.po, this.a);
 
       return true;
     }
-
     // Calculate change in orientation
     let b = createVector(cos(o), sin(o));
     let ab = b.angleBetween(this.a);
@@ -259,7 +268,7 @@ class User {
     let crossedCCW = dir < 0 && r > this.pr;
     let crossedCW = dir > 0 && r < this.pr;
 
-    if (crossedCCW || crossedCW) console.log("Crossed DO.");
+    if (crossedCCW || crossedCW) console.log("Crossed DO.", r, this.r);
     if (crossedCCW) this.base /= 2;
     else if (crossedCW) this.base *= 2;
 
@@ -272,7 +281,7 @@ class User {
 
     // Calculate rate
     this.rate = this.base * r;
-    console.log("BASE | RATE: ", nfs(this.base, 0, 2), nfs(this.rate, 0, 2), nfs(o, 0, 2));
+    console.log("BASE | RATE | O ", nfs(this.base, 0, 2), nfs(this.rate, 0, 2), nfs(o, 0, 2));
 
     if (abs(this.rate - this.prate) < 0.01) return false;
 
@@ -280,6 +289,7 @@ class User {
     this.prate = this.rate;
 
     return true;
+
   }
 
   updateOrientation(o) {
@@ -287,11 +297,11 @@ class User {
 
     // Updated Rate
     if (updatedRate) {
-      console.log("New note: ", nfs(this.rate, 0, 2));
+      console.log("New rate: ", nfs(this.rate, 0, 2));
       //clearTimeout(this.timeout);
       // Play interval in 1 second
       this.r_timeout = setTimeout(() => {
-        console.log("EMITTING RATE: ", nfs(this.rate, 0, 2));
+        console.log("Emit rate: ", nfs(this.rate, 0, 2));
         this.setRate(this.rate);
       }, PITCH_DELAY);
     }
@@ -327,7 +337,6 @@ class User {
     if (mode == 2) interval = 1;
 
     //console.log("L Q I", l, q, interval);
-
     //console.log("INTERVAL", interval);
 
     // // Ignore small changes
@@ -356,20 +365,11 @@ class User {
     // Updated Interval
     if (updatedInterval) {
       console.log("New interval: ", this.interval);
-      console.log("EMITTING INTERVAL: ", this.interval);
+      console.log("Emit interval: ", this.interval);
       socket.emit("interval", {
         idx: this.idx,
         interval: this.interval
       });
-      // Don't double-dip if the level changes too quickly
-      // clearTimeout(this.l_timeout);
-      // this.l_timeout = setTimeout(() => {
-      //   console.log("EMITTING INTERVAL: ", this.interval);
-      //   socket.emit("interval", {
-      //     idx: this.idx,
-      //     interval: this.interval
-      //   });
-      // }, 100);
     }
   }
 
@@ -385,21 +385,6 @@ class User {
 }
 
 function keyPressed() {
-
-  switch (keyCode) {
-    case RIGHT_ARROW:
-      users[1].move(1);
-      break;
-    case LEFT_ARROW:
-      users[1].move(-1);
-      break;
-    case UP_ARROW:
-      users[2].move(1);
-      break;
-    case RIGHT_ARROW:
-      users[2].move(-1);
-      break;
-  }
 
   switch (key) {
     case 'b':
