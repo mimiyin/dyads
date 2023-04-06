@@ -27,17 +27,11 @@ const PITCH_DELAY = 1000;
 const ANGLE_MIN = 30;
 const ANGLE_MAX = 180;
 const INTERVAL_MIN = 0.375
-const O_MARGIN = 0.01;
-
-// Make DO the new North
-let B_OFFSETS = {
-  1: 340,
-  2: 75
-};
-
-let offsets = {
-  1: B_OFFSETS[1],
-  2: B_OFFSETS[2]
+const OFFSETS = {
+  1: 60,
+  2: 120,
+  3: 0,
+  4: 0
 };
 // Pitches for Rhythm
 const RATES = {
@@ -48,7 +42,7 @@ const RATES = {
 // Mode
 let mode = 1;
 let onlySetRate = 0;
-let onlySetLevel = 0;
+let onlySetInterval = 0;
 let start = false;
 
 function setup() {
@@ -68,22 +62,30 @@ function setup() {
     let idx = message.idx;
     let o = message.o;
 
-    // Do I need to reset offset?
-    offsets[idx] = message.src && message.src == 'control' ? 0 : B_OFFSETS[idx];
-
     if (!(idx in users)) users[idx] = new User(idx);
     let user = users[idx];
-    user.updateOrientation(o);
+    user.updatePitch(o);
   });
 
   // Listen for new data
-  socket.on("level", function(message) {
+  socket.on("tilt", function(message) {
     let idx = message.idx;
-    let l = message.l;
+    let t = message.t;
 
     if (!(idx in users)) users[idx] = new User(idx);
     let user = users[idx];
-    user.updateLevel(l);
+    user.updateTempo(t);
+  });
+
+  // Listen for offset adjustments
+  socket.on("offset", function(message) {
+    let idx = message.idx % 2;
+    let off = message.off;
+
+    if ((idx in users)) {
+      let user = users[idx];
+      user.updateOffset(off);
+    }
   });
 
   // Remove disconnected users
@@ -104,7 +106,7 @@ function draw() {
   // Change rate
   textSize(16);
   fill(255);
-  text('(S)tart/(S)top + \t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly set (r)ate: ' + onlySetRate + '\tOnly set (l)evel: ' + onlySetLevel, 100, 20);
+  text('(S)tart/(S)top \t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 100, 20);
 }
 
 class User {
@@ -112,8 +114,9 @@ class User {
     console.log("NEW USER: ", idx);
 
     this.idx = idx;
-    let x = width * (idx > 1 ? 0.67 : 0.34);
-    let y = height / 2;
+    this.src = idx <= 2 ? 'board' : 'control';
+    let x = width * (idx % 2 == 1 ? 0.34 : 0.67);
+    let y = height * (this.src == 'board' ? 0.34 : 0.67);
     this.loc = createVector(x, y);
     this.diam = 100;
     this.init();
@@ -124,60 +127,57 @@ class User {
   }
 
   init() {
-    this.offset = offsets[this.idx];
-    this.rate = 1;
-    this.prate = 0;
-    this.pr = 0;
-    this.o = 0 - this.offset;
+
+    // Orientations
+    this.o = 0;
+    this.offset = OFFSETS[this.idx];
+
     // Starting vector is 270-degrees
     this.po = 270;
     this.a = createVector(-1, 0);
 
+    // Rates
+    this.rate = 1;
+    this.prate = 0;
+    this.pr = 0;
+    this.base = base;
+
     this.r_timeout = null;
-    this.setBase();
+
+    //this.setBase();
 
     // Level stuff
     this.interval = -1;
-    this.pl = 90;
-    this.l_timeout = null;
-
   }
 
+  updateOffset(off) {
+    this.offset += off;
+  }
+
+  // Need this to replay note when there's no change.
   resetOrientation() {
     console.log("RESET TO: ", this.o);
     // Boink it again
     this.reset_o = true;
-    this.updateOrientation(this.o);
+    this.updatePitch(this.o);
   }
 
-  setBase() {
-    console.log("RE-BASE TO: ", base);
-    this.base = base;
+  setBase(_base) {
+    console.log("RE-BASE TO: ", _base);
+    this.base = _base;
     this.resetOrientation();
-  }
-
-  setNorth() {
-
-    console.log("CALIBRATE TO: ", this.o);
-
-    // This is new offset
-    this.offset = this.o;
-
-    // Reset pitch
-    this.setBase();
   }
 
   setRate(rate) {
     socket.emit("rate", {
-      idx: this.idx,
+      idx: this.idx % 2,
       rate: rate
     });
   }
 
   mapRate(o) {
     // Map pitch
-    // Reverse direction
-    let r = map(o, 0, 360, 2, 1);
+    let r = map(o, 0, 360, 1, 2);
 
     // Snap to closest diatonic note
     let closest = 10;
@@ -196,20 +196,18 @@ class User {
 
   updateRate(o) {
 
-    // Remap orientation
-    o = map(o, -180, 180, 0, 360);
-
     // Store the current o
     this.o = o;
 
     //console.log("OFF", round(o), this.offset);
     // Re-center orientation
-    o -= this.offset + O_MARGIN;
+    o -= this.offset;
+
+    // Remap orientation from board
+    if (this.src == 'board') o = map(o, 180, -180, 0, 360);
 
     // Wrap around
-    if (o < 0) {
-      o = 360 + o;
-    }
+    if (o < 0) o = 360 + o;
 
     // Remember for next time
     this.po = o;
@@ -227,14 +225,12 @@ class User {
       // Set it back
       this.reset_o = false;
 
-      console.log("Resetting orientation to: ", nfs(o, 0,2));
-
-      //console.log("RESET DEBUG: ", this.rate, this.pr, this.po, this.a);
-
+      console.log("Resetting orientation to: ", nfs(o, 0, 2));
       return true;
     }
+
     // Calculate change in orientation
-    let b = createVector(cos(o), sin(o));
+    let b = createVector(sin(o), cos(o));
     let ab = b.angleBetween(this.a);
     this.a = b;
 
@@ -242,6 +238,14 @@ class User {
     if (abs(ab) < 0.0175) {
       //console.log("Did not rotate enough.");
       return false;
+    }
+
+    // Re-broadcast out orientation changes
+    if (this.src == "board") {
+      socket.emit("orientation", {
+        idx: this.idx,
+        o: this.o - OFFSETS[this.idx]
+      });
     }
 
     // Shifted
@@ -257,18 +261,21 @@ class User {
 
     // Ignore no change in note
     if (r == this.pr) {
-      console.log("Did not change notes.");
+      //console.log("Did not change notes.");
       return false;
     }
 
     // New note
     //console.log("NEW NOTE");
-    // Calculate crossed
-    // Going left and...
-    let crossedCCW = dir < 0 && r > this.pr;
+    // Going right and rate gets lower
     let crossedCW = dir > 0 && r < this.pr;
+    // Going left and rate gets higher
+    let crossedCCW = dir < 0 && r > this.pr;
 
-    if (crossedCCW || crossedCW) console.log("Crossed DO.", r, this.r);
+    if (crossedCW || crossedCCW) {
+      console.log("Crossed DO CW?", this.idx, r, this.pr, dir);
+      console.log("Crossed DO: ", crossedCW ? 'CW' : 'CCW');
+    }
     if (crossedCCW) this.base /= 2;
     else if (crossedCW) this.base *= 2;
 
@@ -281,7 +288,7 @@ class User {
 
     // Calculate rate
     this.rate = this.base * r;
-    console.log("BASE | RATE | O ", nfs(this.base, 0, 2), nfs(this.rate, 0, 2), nfs(o, 0, 2));
+    //console.log("BASE | RATE | O ", nfs(this.base, 0, 2), nfs(this.rate, 0, 2), nfs(o, 0, 2));
 
     if (abs(this.rate - this.prate) < 0.01) return false;
 
@@ -292,39 +299,42 @@ class User {
 
   }
 
-  updateOrientation(o) {
+  updatePitch(o) {
     let updatedRate = this.updateRate(o);
 
     // Updated Rate
     if (updatedRate) {
       console.log("New rate: ", nfs(this.rate, 0, 2));
-      //clearTimeout(this.timeout);
       // Play interval in 1 second
+      clearTimeout(this.r_timeout);
       this.r_timeout = setTimeout(() => {
-        console.log("Emit rate: ", nfs(this.rate, 0, 2));
+        console.log("Emit rate: ", this.idx, nfs(this.rate, 0, 2));
         this.setRate(this.rate);
       }, PITCH_DELAY);
     }
 
   }
 
-  updateInterval(l) {
+  updateInterval(t) {
 
-    // Re-map level
-    // -90 to -180, 180 to 90 --> -180 to 0
-    // 90 to -90 --> 0 to 180
-    // Toes --> Hips
-    if (l < -90 && l >= -180) l = map(l, -90, -180, -180, -90)
-    // Head --> Hips
-    else if (l >= 90 && l < 180) l = map(l, 180, 90, -90, 0);
-    // Backside
-    else l = map(l, 90, -90, 0, 180);
-    // Remove the sign
-    l = abs(l);
+    // Re-map tilt
+    if (this.src == 'board') {
+      // -90 to -180, 180 to 90 --> -180 to 0
+      // 90 to -90 --> 0 to 180
+      // Toes --> Hips
+      if (t < -90 && t >= -180) t = map(t, -90, -180, -180, -90)
+      // Head --> Hips
+      else if (t >= 90 && l < 180) t = map(t, 180, 90, -90, 0);
+      // Backside
+      else t = map(t, 90, -90, 0, 180);
+      // Remove the sign
+      t = abs(t);
+    }
 
-    l = map(l, 180, 0, 0, 180);
-    l = constrain(l, 0, 180);
-    let q = map(l, ANGLE_MIN, ANGLE_MAX, 0, quanta);
+    // Reverse, high number is longer interval
+    t = map(t, 180, 0, 0, 180);
+    t = constrain(t, 0, 180);
+    let q = map(t, ANGLE_MIN, ANGLE_MAX, 0, quanta);
     q = floor(q);
     let interval = (q * interval_max) / quanta;
 
@@ -352,34 +362,31 @@ class User {
 
     // Remember for next time
     this.interval = interval;
-    //console.log("CALC: " + interval_max, quanta);
-
     return true;
   }
 
-  updateLevel(l) {
+  updateTempo(t) {
     //if(frameCount%30 !== 1) return;
 
-    let updatedInterval = this.updateInterval(l);
+    let updatedInterval = this.updateInterval(t);
 
     // Updated Interval
     if (updatedInterval) {
-      console.log("New interval: ", this.interval);
       console.log("Emit interval: ", this.interval);
       socket.emit("interval", {
-        idx: this.idx,
+        idx: this.idx % 2,
         interval: this.interval
       });
     }
   }
 
-  update(o, l) {
-    this.updateOrientation(o);
-    this.updateLevel(l);
+  update(o, t) {
+    this.updatePitch(o);
+    this.updateTempo(t);
   }
 
   display() {
-    fill("red");
+    fill(this.src == 'board' ? "red" : "green");
     ellipse(this.loc.x, this.loc.y, this.diam, this.diam);
   }
 }
@@ -391,7 +398,7 @@ function keyPressed() {
       base *= 2;
       for (let u in users) {
         let user = users[u];
-        user.setBase();
+        user.setBase(base);
       }
       break;
     case 'v':
@@ -420,19 +427,15 @@ function changeMode() {
   switch (mode) {
     case '1':
       onlySetRate = 1;
-      onlySetLevel = 0;
+      onlySetInterval = 0;
       break;
     case '2':
       onlySetRate = 1;
-      onlySetLevel = 0;
-      // for (let u in users) {
-      //   let user = users[u];
-      //   user.init();
-      // }
+      onlySetInterval = 0;
       break;
     case '3':
       onlySetRate = 0;
-      onlySetLevel = 1;
+      onlySetInterval = 1;
       interval_max = 3;
       quanta = 16;
       for (let u in users) {

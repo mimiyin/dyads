@@ -16,7 +16,7 @@ let idx = 0;
 
 // Start off with pitch only
 let onlySetRate = true;
-let onlySetLevel = false;
+let onlySetTilt = false;
 
 // Listen for confirmation of connection
 socket.on("connect", function() {
@@ -48,14 +48,14 @@ function setup() {
   socket.on('only set rate', function(data) {
     console.log("ONLY SET RATE", data);
     onlySetRate = data;
-    if (onlySetRate) onlySetLevel = 0;
+    if (onlySetRate) onlySetTilt = 0;
   });
 
   // Listen for turning off orientation
-  socket.on('only set level', function(data) {
-    console.log("ONLY SET LEVEL", data);
-    onlySetLevel = data;
-    if (onlySetLevel) onlySetRate = 0;
+  socket.on('only set tilt', function(data) {
+    console.log("ONLY SET TILT", data);
+    onlySetTilt = data;
+    if (onlySetTilt) onlySetRate = 0;
   });
 }
 
@@ -87,31 +87,33 @@ function draw() {
   }
   pop();
 
+  // Draw tilt line
   push();
   rotate(rotationX);
-  stroke(onlySetLevel ? "yellow" : "orange");
+  stroke(onlySetTilt ? "yellow" : "orange");
   strokeWeight(20);
   line(0, 0, diag / 2, 0);
   pop();
 
+  // Draw the orientation line
   push();
   stroke(onlySetRate ? "red" : "blue");
   strokeWeight(20);
   line(0, 0, 0, -diag / 2);
 
   // Send my pitch data
-  if (!onlySetLevel) {
+  if (!onlySetTilt) {
     socket.emit("orientation", {
       idx: idx,
-      o: rotZ
+      o: 360-rotZ
     });
   }
 
   // Send level data
   if (!onlySetRate) {
-    socket.emit("level", {
+    socket.emit("tilt", {
       idx: idx,
-      l: rotX
+      t: rotX
     });
   }
   pop();

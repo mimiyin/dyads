@@ -1,16 +1,16 @@
 // Get orientation
-let rotZ = 0;
-let rotX = 90;
+let o = 0;
+let board_o = 0;
+let t = 0;
 // Current angle
 let a = 0;
 
-// Open and connect input socket
-let socket = io("/input");
-let idx = 0;
+// offset
+let offset = 0;
 
-// Start off with pitch only
-let onlySetRate = true;
-let onlySetLevel = false;
+// Open and connect input socket
+let socket = io();
+let idx = 0;
 
 // Listen for confirmation of connection
 socket.on("connect", function() {
@@ -38,18 +38,11 @@ function setup() {
   // Lower framerate
   frameRate(30);
 
-  // Listen for turning off level
-  socket.on('only set rate', function(data) {
-    console.log("ONLY SET RATE", data);
-    onlySetRate = data;
-    if (onlySetRate) onlySetLevel = 0;
-  });
-
-  // Listen for turning off orientation
-  socket.on('only set level', function(data) {
-    console.log("ONLY SET LEVEL", data);
-    onlySetLevel = data;
-    if (onlySetLevel) onlySetRate = 0;
+  // Listen for orientation data
+  socket.on("orientation", function(message){
+    console.log("O!");
+    let idx = message.idx;
+    board_o = message.o;
   });
 }
 
@@ -59,14 +52,13 @@ function draw() {
 
   // Draw from the center
   translate(width / 2, height / 2);
-  rotate(180);
-
   // Draw all the notes in the diatonic scale
 
   push();
+  rotate(offset - 90);
   for (let r = 0; r < ratios.length; r++) {
     let rat = ratios[r];
-    let angle = map(rat.num / rat.den, 1, 2, -90, 270);
+    let angle = map(rat.num / rat.den, 1, 2, 0, 360);
     strokeWeight(25 - (rat.num + rat.den));
     push();
     if (angle == -90) stroke("green");
@@ -79,72 +71,92 @@ function draw() {
 
   push();
   // Make it go backwards
-  rotate(rotX-270);
-  stroke(onlySetLevel ? "yellow" : "orange");
+  rotate(t);
+  stroke("yellow");
   strokeWeight(20);
   line(0, 0, 0, -diag / 2);
   pop();
 
   push();
-  rotate(rotZ);
-  stroke(onlySetRate ? "red" : "blue");
+  rotate(offset + o);
+  stroke("red");
   strokeWeight(20);
+  line(0, 0, 0, -diag / 2);
+  pop();
+
+  push();
+  rotate(board_o);
+  stroke("white");
+  strokeWeight(5);
   line(0, 0, 0, -diag / 2);
   pop();
 }
 
-function emitOrientation() {
-  console.log("O", rotZ);
+function emit() {
+  console.log("O:", o, "T:", t);
   // Send my pitch data
-  if (!onlySetLevel) {
-    socket.emit("orientation", {
-      idx: idx,
-      o: 360-rotZ
-    });
-  }
-}
-
-function emitLevel() {
-  console.log("L", rotX, onlySetRate);
-  // Send level data
-  if (!onlySetRate) {
-    socket.emit("level", {
-      idx: idx,
-      l: 360-rotX
-    });
-  }
+  socket.emit("message", {
+    idx: idx,
+    o: o,
+    t: t
+  });
 }
 
 function keyPressed() {
-  let sendO = false;
-  let sendL = false;
+
+  let emit_off = false;
+  switch (key) {
+    case 'a':
+      offset--;
+      emit_off = true;
+      break;
+    case 's':
+      offset++;
+      emit_off = true;
+      break;
+  }
+
+  // Control offset
+  if(emit_off) {
+    socket.emit("offset", {
+      idx : idx,
+      off : offset
+    });
+  }
+
+
+  // Controlling what?
+  let emit_o = false;
+  let emit_t = false;
+
   switch (keyCode) {
     case RIGHT_ARROW:
       a++;
-      sendO = true;
+      emit_o = true;
       break;
     case LEFT_ARROW:
       a--;
-      sendO = true;
+      emit_o = true;
       break;
     case UP_ARROW:
-      rotX -= 10;
-      sendL = true;
+      t -= 10;
+      emit_t = true;
       break;
     case DOWN_ARROW:
-      rotX += 10;
-      sendL = true;
+      t += 10;
+      emit_t = true;
       break;
   }
-  if (sendO) {
+
+  // Wrap it around
+  if (emit_o) {
     if (a < 0) a = angles.length - 1;
     else if (a > angles.length - 1) a = 0;
-    rotZ = angles[a];
-    emitOrientation();
+    o = angles[a];
+  } else if (emit_t) {
+    if (t < 0) t = 360 + t;
+    else if (t > 360) t = t - 360;
   }
-  if (sendL) {
-    if (rotX < 0) rotX = 360 + rotX;
-    else if (rotX > 360) rotX = rotX - 360;
-    emitLevel();
-  }
+
+  emit();
 }
