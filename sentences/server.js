@@ -21,7 +21,6 @@ let io = require('socket.io')(server, {
 app.use(express.static('public'));
 
 let data_rate = 30000;
-let data_min = 500;
 let sample_rate = 20;
 let strike_th = 10;
 
@@ -31,7 +30,6 @@ io.on('connection', function(socket){
 
   // Set board settings
   socket.emit('set_data_rate', data_rate);
-  socket.emit('set_data_min', data_min);
   socket.emit('set_sample_rate', sample_rate);
   socket.emit('set_strike_th', strike_th);
 

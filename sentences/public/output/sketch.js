@@ -43,7 +43,6 @@ function process(lines) {
     let tokens = splitTokens(line);
     words[idx].push(tokens);
   }
-  console.log("WORDS", words);
 }
 
 function setup() {
@@ -89,12 +88,31 @@ function draw() {
   text('SHIFT: 1', 10, 50);
   textAlign(RIGHT, CENTER);
   text('RETURN: 2', width-10, 50);
+
+  textSize(16);
+  for(let idx in words) {
+    idx = int(idx);
+    let scenes = words[idx];
+    let y = height/2;
+    textAlign(idx == 1 ? RIGHT : LEFT, CENTER);
+    for(let sc in scenes) {
+
+      let wordset = scenes[sc];
+      y+=20;
+      let str = idx == 2 ? '\t\t\t\t' + nfs(sc, 2, 0) + '\t\t\t\t\t' : '';
+      for(let word of wordset) {
+        str += word + ' ';
+      }
+      fill(sc == w ? 'red' : 'white');
+      text(str, width/2, y);
+    }
+  }
 }
 
 class User {
   constructor(idx) {
     let x = width * (idx > 1 ? 0.67 : 0.34);
-    let y = height / 2;
+    let y = height / 3;
     this.loc = createVector(x, y);
     this.diam = 100;
 
@@ -149,5 +167,7 @@ function keyPressed() {
       break;
   }
 
-  w = constrain(w, 0, words[1].length);
+  // Wrap around
+  if(w >= words[1].length) w = 0;
+  if(w < 0) w = words[1].length-1;
 }
