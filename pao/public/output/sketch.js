@@ -122,6 +122,7 @@ class User {
     console.log("NEW USER: ", idx);
 
     this.idx = idx;
+    this.eidx = this.idx % 2 == 1 ? 1 : 2;
     this.src = idx <= 2 ? 'board' : 'control';
     let x = width * (idx % 2 == 1 ? 0.34 : 0.67);
     let y = height * (this.src == 'board' ? 0.34 : 0.67);
@@ -178,7 +179,7 @@ class User {
 
   setRate(rate) {
     socket.emit("rate", {
-      idx: this.idx % 2,
+      idx: this.eidx,
       rate: rate
     });
   }
@@ -313,10 +314,11 @@ class User {
     // Updated Rate
     if (updatedRate) {
       console.log("New rate: ", nfs(this.rate, 0, 2));
+
       // Play interval in 1 second
       clearTimeout(this.r_timeout);
       this.r_timeout = setTimeout(() => {
-        console.log("Emit rate: ", this.idx, nfs(this.rate, 0, 2));
+        console.log("Emit rate: ", this.eidx, nfs(this.rate, 0, 2));
         this.setRate(this.rate);
       }, PITCH_DELAY);
     }
@@ -380,9 +382,9 @@ class User {
 
     // Updated Interval
     if (updatedInterval) {
-      console.log("Emit interval: ", this.idx, this.interval);
+      console.log("Emit interval: ", this.eidx, this.interval);
       socket.emit("interval", {
-        idx: this.idx % 2,
+        idx: this.eidx,
         interval: this.interval
       });
     }
