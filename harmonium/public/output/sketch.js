@@ -28,6 +28,10 @@ let rpdata;
 let rp = 0;
 let start = 0;
 
+// Keep track of contacts
+let contacts = {};
+const GAP = 3000;
+
 function preload() {
   scales = loadJSON('scales.json');
   record = loadJSON('record.json');
@@ -75,7 +79,7 @@ function setup() {
 
   // Listen for users connecting
   socket.on('idx', function(idx) {
-    users[idx] = {};
+    users[idx] = new User(idx);
   });
 
   // Remove disconnected users
@@ -83,23 +87,54 @@ function setup() {
     delete users[idx];
   });
 
-  // Listen for touches
-  socket.on('touch', function(message) {
+  // Listen for contact
+  socket.on('contact', function(message) {
     let idx = message.idx;
-    let touch = message.id;
-    if(!users[idx]) users[idx] = {};
-    users[idx][touch] = 1;
-    console.log(touch, users);
+    let reader = message.id;
+    let id = message.id;
+    let pairId = reader + '-' + id;
+    let now = millis();
+
+    // Add new user
+    if(!(idx in users)) users[idx] = new User(idx);
+
+    // Only play note if it's been a while since contact
+    if (pairId in contacts) {
+      console.log("HI AGAIN");
+      if (now - contacts[pairId] > GAP) {
+        console.log("IT'S BEEN A WHILE");
+        addBalls(1);
+      }
+    }
+    // Or it's the first time
+    else {
+      console.log("FIRST TIME");
+      addBalls(1);
+    }
+
+    // Log the time
+    contacts[pairId] = now;
+
   });
 
-  // Listen for disconnections
-  socket.on('untouch', function(message) {
-    let idx = message.idx;
-    let touch = message.id;
-    if(!users[idx]) users[idx] = {};
-    users[idx][touch] = -1;
-    console.log(users);
-  });
+
+  // Listen for touches
+  // socket.on('touch', function(message) {
+  //   let idx = message.idx;
+  //   let touch = message.id;
+  //   if (!users[idx]) users[idx] = new User(idx);
+  //   users[idx].touches[touch] = 1;
+  //   console.log(touch, users);
+  // });
+  //
+  // // Listen for disconnections
+  // socket.on('untouch', function(message) {
+  //   let idx = message.idx;
+  //   let touch = message.id;
+  //   if (!users[idx]) users[idx] = new User(idx);
+  //   users[idx].touches[touch] = -1;
+  //   console.log(users);
+  // });
 }
 
 function reset() {
@@ -110,18 +145,22 @@ function draw() {
   background(0);
 
   // Look for matching touches
-  let touches1 = users[1];
-  let touches2 = users[2];
-  for (let t in touches1) {
-    let touch1 = touches1[t];
-    let touch2 = touches2[t];
-    if(touch1 == 1 && touch2 == 1) {
-      addBalls(1);
-      // Turn it off
-      touches1[t] = 0;
-      touches2[t] = 0;
-    }
-  }
+  // try {
+  //   let touches1 = users[1].touches;
+  //   let touches2 = users[2].touches;
+  //   for (let t in touches1) {
+  //     let touch1 = touches1[t];
+  //     let touch2 = touches2[t];
+  //     if (touch1 == 1 && touch2 == 1) {
+  //       addBalls(1);
+  //       // Turn it off
+  //       touches1[t] = 0;
+  //       touches2[t] = 0;
+  //     }
+  //   }
+  // } catch (e) {
+  //   console.log("No touches.");
+  // }
 
 
   if (replay) {
@@ -168,19 +207,16 @@ function draw() {
     if (ball.died()) balls.splice(b, 1);
   }
 
-  // Draw users
-  let counter = 0;
-  for(let u in users) {
-    counter++;
-    fill(255, 64);
-    ellipse(width - counter*40, 10, 20, 20);
-  }
-
   // Display text
   fill(255);
   noStroke();
   textSize(16);
   text('Press ENTER to release note.', 5, 20);
+
+  for (let u in users) {
+    let user = users[u];
+    user.run();
+  }
 }
 
 // Paramaters are tonic index and tonic note.
@@ -242,5 +278,23 @@ function addBalls(num) {
 
 // Manual mode
 function keyPressed() {
-  if(keyCode == ENTER) addBalls(1);
+  if (keyCode == ENTER) addBalls(1);
+}
+
+class User {
+  constructor(idx) {
+    console.log("NEW USER!", idx);
+    this.idx = idx;
+    let x = width * (idx % 2 == 1 ? 0.75 : 0.85);
+    let y = 20;
+    this.loc = createVector(x, y);
+    this.diam = 20;
+    this.touches = [];
+  }
+
+  run() {
+    fill(255, 200);
+    ellipse(this.loc.x, this.loc.y, this.diam, this.diam);
+  }
+
 }

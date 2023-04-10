@@ -1,13 +1,16 @@
 2
-yes no
-yes
+yesido1 yesido2 yesido3
+mmm
+theydonot
+yes2 no1
+yes1
 maybe probably possibly
-need want know think
+need want1 know think
 this that
-did didn’t don’t won’t will will not or or or nor nor nor
+did didnt dont wont will will not or or or nor nor nor
 or
-yes no no no no no no
-all want
-I need
-yes no
-no
+yes1 no1 no2 no3 no4 no1 no1
+all want1
+i need
+yes1 no3
+no4

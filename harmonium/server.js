@@ -33,6 +33,18 @@ io.on('connection', function(socket){
   socket.on('disconnect', function() {
     console.log("A player or board client has disconnected " + socket.id);
   });
+
+  // Listen for board connections
+  socket.on('idx', function(message){
+    console.log("IDX", message.idx);
+    outputs.emit('idx', message.idx);
+  })
+
+  // Listen for RFID contact
+  socket.on('RFID', function(message){
+    console.log(message.idx, "READER", message.reader, "ID", message.id);
+    outputs.emit('contact', message);
+  });
 });
 
 // Clients in the input namespace

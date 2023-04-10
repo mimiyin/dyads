@@ -34,7 +34,7 @@ let io = require('socket.io')(server, {
 
 // Local variables
 let mode = 1;
-let data_rate = 200;
+let data_rate = 20;
 let sample_rate = 20;
 
 let ohs = { 1: 0, 2 : 0, 3: 0, 4: 0 };
@@ -72,6 +72,8 @@ io.on('connection', function(socket) {
     // Send it to all of the output clients
     if(mode > 1) outputs.emit('tilt', message);
 
+    // Send battery data
+    outputs.emit('bat', message.bat);
   });
 
   // Listen for offset adjustments

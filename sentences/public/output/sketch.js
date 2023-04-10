@@ -129,9 +129,9 @@ class User {
       this.go = false;
       word = random(words[this.idx][w]);
       console.log("STRIKE", frameCount, this.go, this.idx, word);
-      speech.setVoice(VOICES[int(this.idx)-1]);
-      speech.speak(word); // say something
-      //socket.emit('speak', {idx : idx, word: word});
+      //speech.setVoice(VOICES[int(this.idx)-1]);
+      //speech.speak(word); // say something
+      socket.emit('strike', {idx : this.idx, word: word});
       setTimeout(() => {
         this.go = true;
       }, STRIKE_DELAY);
@@ -152,11 +152,11 @@ function keyPressed() {
 
   switch(keyCode) {
     case SHIFT:
-      if(!users[1]) users[1] = new User(1);
+      if(!(1 in users)) users[1] = new User(1);
       users[1].strike();
       break;
     case RETURN:
-      if(!users[2]) users[2] = new User(2);
+      if(!(2 in users)) users[2] = new User(2);
       users[2].strike();
       break;
     case RIGHT_ARROW:

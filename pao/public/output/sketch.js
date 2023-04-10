@@ -45,6 +45,9 @@ let onlySetRate = 0;
 let onlySetInterval = 0;
 let start = false;
 
+// Battery data
+let bat = 0;
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   angleMode(DEGREES);
@@ -57,7 +60,7 @@ function setup() {
     console.log("idx joined: ", users);
   });
 
-  // Listen for new data
+  // Listen for new orientation data
   socket.on("orientation", function(message) {
     let idx = message.idx;
     let o = message.o;
@@ -67,7 +70,7 @@ function setup() {
     user.updatePitch(o);
   });
 
-  // Listen for new data
+  // Listen for new tilt data
   socket.on("tilt", function(message) {
     let idx = message.idx;
     let t = message.t;
@@ -76,6 +79,11 @@ function setup() {
     let user = users[idx];
     user.updateTempo(t);
   });
+
+  // Listen for battery
+  socket.on("bat", function(_bat){
+    bat = _bat;
+  })
 
   // Listen for offset adjustments
   socket.on("offset", function(message) {
@@ -106,7 +114,7 @@ function draw() {
   // Change rate
   textSize(16);
   fill(255);
-  text('(S)tart/(S)top \t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 100, 20);
+  text('Battery: ' + bat + '\t(S)tart/(S)top \t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 100, 20);
 }
 
 class User {
@@ -324,7 +332,7 @@ class User {
       // Toes --> Hips
       if (t < -90 && t >= -180) t = map(t, -90, -180, -180, -90)
       // Head --> Hips
-      else if (t >= 90 && l < 180) t = map(t, 180, 90, -90, 0);
+      else if (t >= 90 && t < 180) t = map(t, 180, 90, -90, 0);
       // Backside
       else t = map(t, 90, -90, 0, 180);
       // Remove the sign
@@ -372,7 +380,7 @@ class User {
 
     // Updated Interval
     if (updatedInterval) {
-      console.log("Emit interval: ", this.interval);
+      console.log("Emit interval: ", this.idx, this.interval);
       socket.emit("interval", {
         idx: this.idx % 2,
         interval: this.interval
