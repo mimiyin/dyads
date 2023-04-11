@@ -1,13 +1,14 @@
 2
+yes2 no1
 yesido1 yesido2 yesido3
 mmm
-theydonot
-yes2 no1
 yes1
+yes1
+yyes1 yyes4 yyes5 yyes6 yyes7 yyes8
 maybe probably possibly
 need want1 know think
 this that
-did didnt dont wont will will not or or or nor nor nor
+did didnt dont wont will will
 or
 yes1 no1 no2 no3 no4 no1 no1
 all want1
