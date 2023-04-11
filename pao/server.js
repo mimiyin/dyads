@@ -57,23 +57,84 @@ io.on('connection', function(socket) {
   socket.on('idx', function(idx) {
     console.log("idx", idx);
     socket.idx = idx;
-    outputs.emit('idx', socket.idx);
+    outputs.emit('idx', idx);
   });
 
   // Listen for orientation and tilt data
   socket.on('message', function(message) {
     // Data comes in as whatever was sent, including objects
     ohs[message.idx] = message.o;
-    console.log("1 " + ohs[1] + "\t2 " + ohs[2] + "\t3 " + ohs[3] + "\t4 " + ohs[4]);
+    console.log("1 " + ohs[1] + "\t2 " + ohs[2]);
+
+    // Unpack message
+    let idx = message.idx;
+    let src = "board";
+    let o = message.o;
+    let t = message.t;
 
     // Send it to all of the output clients
-    if(mode <= 2) outputs.emit('orientation', message);
+    if(mode <= 2) outputs.emit('orientation', {
+      idx : idx,
+      src : src,
+      o : o
+    });
 
     // Send it to all of the output clients
-    if(mode > 1) outputs.emit('tilt', message);
+    if(mode > 1) outputs.emit('tilt', {
+      idx : idx,
+      src : src,
+      t : t
+    });
 
     // Send battery data
     outputs.emit('bat', message.bat);
+  });
+
+  // Listen for this output client to disconnect
+  socket.on('disconnect', function() {
+    console.log("A player or board client has disconnected " + socket.id);
+  });
+});
+
+// Clients in the output namespace
+let controls = io.of('/control');
+
+// Listen for output clients to connect
+controls.on('connection', function(socket) {
+  console.log('A control client connected: ' + socket.id);
+
+  // Sync up mode
+  socket.emit('mode', mode);
+
+  // Tell inputs what data to send
+  update_mode();
+
+  // Listen for id
+  socket.on('idx', function(idx) {
+    console.log("Control idx", idx);
+    socket.idx = idx;
+    outputs.emit('idx', {
+      idx : idx,
+      src : 'control'
+    });
+  });
+
+  // Listen for orientation and tilt data
+  socket.on('orientation', function(message) {
+    // Data comes in as whatever was sent, including objects
+    ohs[message.idx] = message.o;
+    console.log("1 " + ohs[1] + "\t2 " + ohs[2] + "\t3 " + ohs[3] + "\t4 " + ohs[4]);
+
+    // Send it to all of the output clients
+    outputs.emit('orientation', message);
+  });
+
+  // Listen for orientation and tilt data
+  socket.on('tilt', function(message) {
+
+    // Send it to all of the output clients
+    outputs.emit('tilt', message);
+
   });
 
   // Listen for offset adjustments
@@ -83,9 +144,10 @@ io.on('connection', function(socket) {
 
   // Listen for this output client to disconnect
   socket.on('disconnect', function() {
-    console.log("A player or board client has disconnected " + socket.id);
+    console.log("A control client has disconnected " + socket.id);
   });
 });
+
 
 // Clients in the output namespace
 let outputs = io.of('/output');

@@ -28,15 +28,15 @@ const ANGLE_MIN = 30;
 const ANGLE_MAX = 180;
 const INTERVAL_MIN = 0.375
 const OFFSETS = {
-  1: 60,
-  2: 120,
-  3: 0,
-  4: 0
+  'board/1': 60,
+  'board/2': 270,
+  'control/1': 0,
+  'control/2': 0
 };
 // Pitches for Rhythm
 const RATES = {
-  1: 0.83333,
-  2: 1
+  'board/1': 0.83333,
+  'board/2': 1
 };
 
 // Mode
@@ -44,9 +44,21 @@ let mode = 1;
 let onlySetRate = 0;
 let onlySetInterval = 0;
 let start = false;
+let src = "board";
 
 // Battery data
 let bat = 0;
+
+// Create new users
+function createId(idx, src) {
+  return src + '/' + idx;
+}
+
+function getOrCreate(idx, src) {
+  let id = createId(idx, src);
+  if (!(id in users)) users[id] = new User(idx, src);
+  return users[id];
+}
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -55,18 +67,20 @@ function setup() {
   textAlign(LEFT, TOP);
   strokeCap(PROJECT);
 
-  socket.on("idx", function(idx) {
-    users[idx] = new User(idx);
-    console.log("idx joined: ", users);
+  socket.on("idx", function(message) {
+    let idx = message.idx;
+    let src = message.src;
+    getOrCreate(idx, src);
+    console.log('User ' + idx + ' joined.', idx);
   });
 
   // Listen for new orientation data
   socket.on("orientation", function(message) {
     let idx = message.idx;
     let o = message.o;
+    let src = message.src;
 
-    if (!(idx in users)) users[idx] = new User(idx);
-    let user = users[idx];
+    let user = getOrCreate(idx, src);
     user.updatePitch(o);
   });
 
@@ -74,26 +88,29 @@ function setup() {
   socket.on("tilt", function(message) {
     let idx = message.idx;
     let t = message.t;
+    let src = message.src;
 
-    if (!(idx in users)) users[idx] = new User(idx);
-    let user = users[idx];
+    let user = getOrCreate(idx, src);
     user.updateTempo(t);
   });
 
   // Listen for battery
-  socket.on("bat", function(_bat){
+  socket.on("bat", function(_bat) {
     bat = _bat;
   })
 
   // Listen for offset adjustments
   socket.on("offset", function(message) {
-    let idx = message.idx % 2;
+    let idx = message.idx;
     let off = message.off;
 
-    if ((idx in users)) {
-      let user = users[idx];
+    // Adjust offset
+    let id = createId(idx, src);
+    if (id in users) {
+      let user = users[id];
       user.updateOffset(off);
     }
+
   });
 
   // Remove disconnected users
@@ -114,21 +131,22 @@ function draw() {
   // Change rate
   textSize(16);
   fill(255);
-  text('Battery: ' + bat + '\t(S)tart/(S)top \t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 100, 20);
+  text('Battery: ' + bat + '\t(S)tart/(S)top \t(X)Board/(C)ontrol \t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 10, 20);
 }
 
 class User {
-  constructor(idx) {
-    console.log("NEW USER: ", idx);
+  constructor(idx, src) {
 
+    this.id = createId(idx, src);
     this.idx = idx;
-    this.eidx = this.idx % 2 == 1 ? 1 : 2;
-    this.src = idx <= 2 ? 'board' : 'control';
-    let x = width * (idx % 2 == 1 ? 0.34 : 0.67);
+    this.src = src;
+    let x = width * idx * 0.34;
     let y = height * (this.src == 'board' ? 0.34 : 0.67);
     this.loc = createVector(x, y);
     this.diam = 100;
     this.init();
+
+    console.log("New user: " + this.id);
   }
 
   run() {
@@ -139,7 +157,7 @@ class User {
 
     // Orientations
     this.o = 0;
-    this.offset = OFFSETS[this.idx];
+    this.offset = OFFSETS[this.id];
 
     // Starting vector is 270-degrees
     this.po = 270;
@@ -179,7 +197,7 @@ class User {
 
   setRate(rate) {
     socket.emit("rate", {
-      idx: this.eidx,
+      idx: this.idx,
       rate: rate
     });
   }
@@ -209,14 +227,15 @@ class User {
     this.o = o;
 
     //console.log("OFF", round(o), this.offset);
+
     // Re-center orientation
     o -= this.offset;
 
     // Remap orientation from board
-    if (this.src == 'board') o = map(o, 180, -180, 0, 360);
+    if (this.src == 'board') o = map(o, -180, 180, 360, 0);
 
     // Wrap around
-    if (o < 0) o = 360 + o;
+    if (o > 360) o = o - 360;
 
     // Remember for next time
     this.po = o;
@@ -253,7 +272,7 @@ class User {
     if (this.src == "board") {
       socket.emit("orientation", {
         idx: this.idx,
-        o: this.o - OFFSETS[this.idx]
+        o: this.o - OFFSETS[this.id]
       });
     }
 
@@ -282,7 +301,7 @@ class User {
     let crossedCCW = dir < 0 && r > this.pr;
 
     if (crossedCW || crossedCCW) {
-      console.log("Crossed DO CW?", this.idx, r, this.pr, dir);
+      console.log("Crossed DO CW?", this.idx, r, this.pr, o);
       console.log("Crossed DO: ", crossedCW ? 'CW' : 'CCW');
     }
     if (crossedCCW) this.base /= 2;
@@ -318,7 +337,7 @@ class User {
       // Play interval in 1 second
       clearTimeout(this.r_timeout);
       this.r_timeout = setTimeout(() => {
-        console.log("Emit rate: ", this.eidx, nfs(this.rate, 0, 2));
+        console.log("Emit rate: ", this.id, nfs(this.rate, 0, 2));
         this.setRate(this.rate);
       }, PITCH_DELAY);
     }
@@ -382,9 +401,9 @@ class User {
 
     // Updated Interval
     if (updatedInterval) {
-      console.log("Emit interval: ", this.eidx, this.interval);
+      console.log("Emit interval: ", this.id, this.interval);
       socket.emit("interval", {
-        idx: this.eidx,
+        idx: this.idx,
         interval: this.interval
       });
     }
@@ -417,6 +436,12 @@ function keyPressed() {
         let user = users[u];
         user.setBase();
       }
+      break;
+    case 'c':
+      src = "control";
+      break;
+    case 'x':
+      src = "board";
       break;
   }
 

@@ -9,8 +9,12 @@ let a = 0;
 let offset = 0;
 
 // Open and connect input socket
-let socket = io();
+let socket = io('/control');
 let idx = 0;
+
+// Mode
+let onSetRate = 1;
+let onlySetTilt = 0;
 
 // Listen for confirmation of connection
 socket.on("connect", function() {
@@ -41,8 +45,22 @@ function setup() {
   // Listen for orientation data
   socket.on("orientation", function(message){
     console.log("O!");
-    let idx = message.idx;
-    board_o = message.o;
+    let thisIdx = message.idx;
+    if(_idx == idx) board_o = message.o;
+  });
+
+  // Listen for turning off level
+  socket.on('only set rate', function(data) {
+    console.log("ONLY SET RATE", data);
+    onlySetRate = data;
+    if (onlySetRate) onlySetTilt = 0;
+  });
+
+  // Listen for turning off orientation
+  socket.on('only set tilt', function(data) {
+    console.log("ONLY SET TILT", data);
+    onlySetTilt = data;
+    if (onlySetTilt) onlySetRate = 0;
   });
 }
 
@@ -92,14 +110,27 @@ function draw() {
   pop();
 }
 
-function emit() {
-  console.log("O:", o, "T:", t);
-  // Send my pitch data
-  socket.emit("message", {
+function emit(event) {
+
+  // Create message
+  let message = {
     idx: idx,
-    o: o,
-    t: t
-  });
+    src: "control",
+  }
+
+  // Append data
+  if(event == "orientation") {
+    if(onlySetTilt) return;
+    message.o = o;
+  }
+  else if(event == "tilt") {
+    if(onlySetRate) return;
+    message.t = t;
+  }
+
+  // Emit event
+  socket.emit( event, message);
+
 }
 
 function keyPressed() {
@@ -158,5 +189,6 @@ function keyPressed() {
     else if (t > 360) t = t - 360;
   }
 
-  emit();
+  if(emit_o) emit("orientation");
+  else if(emit_t) emit("tilt");
 }
