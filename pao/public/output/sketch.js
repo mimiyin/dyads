@@ -44,7 +44,7 @@ let mode = 1;
 let onlySetRate = 0;
 let onlySetInterval = 0;
 let start = false;
-let src = "board";
+let source = "board";
 
 // Battery data
 let bat = 0;
@@ -80,6 +80,9 @@ function setup() {
     let o = message.o;
     let src = message.src;
 
+    // Nevermind if not on the right source
+    if(source !== src) return;
+
     let user = getOrCreate(idx, src);
     user.updatePitch(o);
   });
@@ -89,6 +92,9 @@ function setup() {
     let idx = message.idx;
     let t = message.t;
     let src = message.src;
+
+    // Nevermind if not on the right source
+    if(source !== src) return;
 
     let user = getOrCreate(idx, src);
     user.updateTempo(t);
@@ -131,7 +137,7 @@ function draw() {
   // Change rate
   textSize(16);
   fill(255);
-  text('Battery: ' + bat + '\t(S)tart/(S)top \t(X)Board/(C)ontrol \t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 10, 20);
+  text('Power: ' + bat + '\t(S)tart/(S)top \t(X/C)Source: '+ source   + '\t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 10, 20);
 }
 
 class User {
@@ -332,7 +338,7 @@ class User {
 
     // Updated Rate
     if (updatedRate) {
-      console.log("New rate: ", nfs(this.rate, 0, 2));
+      console.log("New rate: ", this.id, nfs(this.rate, 0, 2));
 
       // Play interval in 1 second
       clearTimeout(this.r_timeout);
@@ -438,10 +444,10 @@ function keyPressed() {
       }
       break;
     case 'c':
-      src = "control";
+      source = "control";
       break;
     case 'x':
-      src = "board";
+      source = "board";
       break;
   }
 
