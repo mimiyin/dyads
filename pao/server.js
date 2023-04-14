@@ -37,7 +37,8 @@ let mode = 1;
 let data_rate = 20;
 let sample_rate = 20;
 
-let ohs = { 1: 0, 2 : 0, 3: 0, 4: 0 };
+let ohs = {};
+let tees = {};
 
 // Listen for output clients to connect
 io.on('connection', function(socket) {
@@ -54,23 +55,28 @@ io.on('connection', function(socket) {
   update_mode();
 
   // Listen for id
-  socket.on('idx', function(idx) {
-    console.log("idx", idx);
-    socket.idx = idx;
-    outputs.emit('idx', idx);
+  socket.on('idx', function(message) {
+    console.log(message.src + '-' + message.idx + ' connected.');
+    socket.idx = message.idx;
+    outputs.emit('idx', {
+      idx : message.idx,
+      src: message.src
+    });
   });
 
   // Listen for orientation and tilt data
   socket.on('message', function(message) {
-    // Data comes in as whatever was sent, including objects
-    ohs[message.idx] = message.o;
-    console.log("1 " + ohs[1] + "\t2 " + ohs[2]);
-
+    // Data comes in as whatever was sent, including objects'
+    
     // Unpack message
     let idx = message.idx;
-    let src = "board";
+    let src = message.src;
     let o = message.o;
     let t = message.t;
+
+    //print_data('o', message.src, message.idx, ohs, message.o)
+    //print_data('t', message.src, message.idx, tees, message.t)
+
 
     // Send it to all of the output clients
     if(mode <= 2) outputs.emit('orientation', {
@@ -109,21 +115,10 @@ controls.on('connection', function(socket) {
   // Tell inputs what data to send
   update_mode();
 
-  // Listen for id
-  socket.on('idx', function(idx) {
-    console.log("Control idx", idx);
-    socket.idx = idx;
-    outputs.emit('idx', {
-      idx : idx,
-      src : 'control'
-    });
-  });
-
   // Listen for orientation and tilt data
   socket.on('orientation', function(message) {
     // Data comes in as whatever was sent, including objects
-    ohs[message.idx] = message.o;
-    console.log("1 " + ohs[1] + "\t2 " + ohs[2] + "\t3 " + ohs[3] + "\t4 " + ohs[4]);
+    print_data('o', message.src, message.idx, ohs, message.o)
 
     // Send it to all of the output clients
     outputs.emit('orientation', message);
@@ -131,6 +126,8 @@ controls.on('connection', function(socket) {
 
   // Listen for orientation and tilt data
   socket.on('tilt', function(message) {
+
+    print_data('t', message.src, message.idx, tees, message.t)
 
     // Send it to all of the output clients
     outputs.emit('tilt', message);
@@ -162,7 +159,7 @@ outputs.on('connection', function(socket) {
 
   // Listen for orientation data
   socket.on('orientation', function(message){
-    io.emit('orientation', message);
+    controls.emit('orientation', message);
   });
 
   // Listen for rate data
@@ -238,4 +235,17 @@ function update_mode() {
 
   io.emit('only set rate', only_set_rate);
   io.emit('only set interval', only_set_interval);
+  controls.emit('only set rate', only_set_rate);
+  controls.emit('only set interval', only_set_interval);
+}
+
+function print_data(label, src, idx, dataObj, data) {
+      // Just to print out o data
+      let id= src + '-' + idx;
+      dataObj[id] = data;
+      let str = label + ' ';
+      Object.keys(dataObj).forEach(key=>{ 
+        str +=  key + ' ' + dataObj[key] + '\t'; 
+      });
+      console.log(str);
 }

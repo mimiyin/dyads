@@ -35,7 +35,6 @@ function preload() {
 
 function process(lines) {
   let idx = lines[0];
-  console.log(idx);
   for (let l in lines) {
     if(l == 0) continue;
     let line = lines[l];
@@ -51,9 +50,10 @@ function setup() {
   // console.log(voices, voices.length);
   //speech.setVoice('Google português do Brasil');
 
-  socket.on("idx", function(idx) {
+  socket.on("idx", function(message) {
+    let idx = message.idx;
     users[idx] = new User(idx);
-    console.log("idx joined: ", users);
+    console.log("idx joined: ", idx);
   });
 
   // Listen for new data
@@ -128,7 +128,7 @@ class User {
     if (this.go) {
       this.go = false;
       word = random(words[this.idx][w]);
-      console.log("STRIKE", frameCount, this.go, this.idx, word);
+      console.log("STRIKE", this.idx, word);
       //speech.setVoice(VOICES[int(this.idx)-1]);
       //speech.speak(word); // say something
       socket.emit('strike', {idx : this.idx, word: word});

@@ -29,7 +29,7 @@ const ANGLE_MAX = 180;
 const INTERVAL_MIN = 0.375
 const OFFSETS = {
   'board/1': 60,
-  'board/2': 270,
+  'board/2': 30,
   'control/1': 0,
   'control/2': 0
 };
@@ -105,20 +105,6 @@ function setup() {
     bat = _bat;
   })
 
-  // Listen for offset adjustments
-  socket.on("offset", function(message) {
-    let idx = message.idx;
-    let off = message.off;
-
-    // Adjust offset
-    let id = createId(idx, src);
-    if (id in users) {
-      let user = users[id];
-      user.updateOffset(off);
-    }
-
-  });
-
   // Remove disconnected users
   socket.on("disconnect", function(id) {
     delete users[id];
@@ -181,10 +167,6 @@ class User {
 
     // Level stuff
     this.interval = -1;
-  }
-
-  updateOffset(off) {
-    this.offset += off;
   }
 
   // Need this to replay note when there's no change.
@@ -460,6 +442,7 @@ function keyPressed() {
     changeMode();
   } else if (key == 's') {
     start = !start;
+    console.log(start ? 'stop' : 'start');
     socket.emit(start ? 'stop' : 'start');
   }
 }

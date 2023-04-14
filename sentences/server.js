@@ -34,10 +34,10 @@ io.on('connection', function(socket){
   socket.emit('set_strike_th', strike_th);
 
   // Listen for id
-  socket.on('idx', function(idx) {
-    console.log("idx", idx);
-    socket.idx = idx;
-    outputs.emit('idx', socket.idx);
+  socket.on('idx', function(message) {
+    console.log("idx", message.idx);
+    socket.idx = message.idx;
+    outputs.emit('idx', message);
   });
 
   // Listen for strike data
