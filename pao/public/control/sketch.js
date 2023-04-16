@@ -16,6 +16,11 @@ let idx = 0;
 let onlySetRate = 1;
 let onlySetTilt = 0;
 
+// notes sequence
+let note_sequences = [0, 2, 4, 2, 1, 3]; // assuming 0 is the root note
+let current_note_index = 0;
+let notes_text_offset = -600; // offset for both x and y of the text
+
 // Listen for confirmation of connection
 socket.on("connect", function () {
   console.log("Connected");
@@ -108,6 +113,17 @@ function draw() {
   strokeWeight(5);
   line(0, 0, 0, -diag / 2);
   pop();
+
+  // Draw the notes sequence in white and mark the current note in red
+  stroke("white");
+  strokeWeight(1);
+  for (let i = 0; i < note_sequences.length; i++) {
+    let note = note_sequences[i];
+    text(note, 50 + i * 50 + notes_text_offset, 100 + notes_text_offset);
+  }
+  stroke("red");
+  strokeWeight(1);
+  text(note_sequences[current_note_index], 50 + current_note_index * 50 + notes_text_offset, 100 + notes_text_offset);
 }
 
 function emit(event) {
@@ -140,6 +156,7 @@ function keyPressed() {
   // Controlling what?
   let emit_o = false;
   let emit_t = false;
+  let num_arrows = 0;
 
   switch (keyCode) {
     case RIGHT_ARROW:
@@ -158,6 +175,27 @@ function keyPressed() {
       t += 10;
       emit_t = true;
       break;
+    case 65:
+      // console.log("current note index: " + current_note_index);
+      if (current_note_index == 0) {
+        console.log("no more notes before this one");
+        return;
+      }
+      num_arrows = note_sequences[current_note_index - 1] - note_sequences[current_note_index];
+      simulateArrows(num_arrows);
+      current_note_index--;
+      break;
+    case 68:
+      // console.log("current note index: " + current_note_index);
+      if (current_note_index == note_sequences.length - 1) {
+        console.log("no more notes after this one");
+        return;
+      }
+
+      num_arrows = note_sequences[current_note_index + 1] - note_sequences[current_note_index];
+      simulateArrows(num_arrows);
+      current_note_index++;
+      break;
   }
 
   // Wrap it around
@@ -172,4 +210,19 @@ function keyPressed() {
 
   if (emit_o) emit("orientation");
   else if (emit_t) emit("tilt");
+}
+
+function simulateArrows(num_arrows) {
+  // console.log("Simulating " + num_arrows + " arrows");
+  if (num_arrows < 0) {
+    for (let i = 0; i < abs(num_arrows); i++) {
+      keyCode = LEFT_ARROW;
+      keyPressed();
+    }
+  } else {
+    for (let i = 0; i < num_arrows; i++) {
+      keyCode = RIGHT_ARROW;
+      keyPressed();
+    }
+  }
 }
