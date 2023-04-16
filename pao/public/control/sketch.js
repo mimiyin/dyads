@@ -16,10 +16,28 @@ let idx = 0;
 let onlySetRate = 1;
 let onlySetTilt = 0;
 
-// notes sequence
-let note_sequences = [0, 2, 4, 2, 1, 3]; // assuming 0 is the root note
-let current_note_index = 0;
-let notes_text_offset = -600; // offset for both x and y of the text
+// notes and arrows sequence
+// 1. Declare predefined notes list
+const notes = [1, 2, 3, 4, 5, 6, 7];
+const notes_sequence = ["+1", "+4", "-7", "+3", "-6", "-4", "+7", "-3"]
+
+// 2. Loop to calculate and store arrow presses for each pair of elements in the notes_sequence
+const startingNote = 1;
+const arrow_presses = [];
+
+let currentNote = startingNote;
+for (let i = 0; i < notes_sequence.length; i++) {
+  const nextElement = notes_sequence[i];
+  const arrowPresses = arrowPressesToElement(currentNote, nextElement);
+  arrow_presses.push(arrowPresses);
+  currentNote = parseInt(nextElement.slice(1), 10); // Update currentNote for the next iteration
+}
+
+console.log('Arrow presses calculated are: ', arrow_presses);
+
+// 3. defualts for autopilot
+let current_arrow_index = 0;
+let notes_text_offset = -600; // display offset for x of the notes sequence
 
 // Listen for confirmation of connection
 socket.on("connect", function () {
@@ -115,15 +133,18 @@ function draw() {
   pop();
 
   // Draw the notes sequence in white and mark the current note in red
+  textSize(20);
   stroke("white");
+  fill("white");
   strokeWeight(1);
-  for (let i = 0; i < note_sequences.length; i++) {
-    let note = note_sequences[i];
-    text(note, 50 + i * 50 + notes_text_offset, 100 + notes_text_offset);
+  for (let i = 0; i < arrow_presses.length; i++) {
+    let note = notes_sequence[i];
+    text(note, 50 + i * 50 + notes_text_offset, 0);
   }
   stroke("red");
+  fill("red");
   strokeWeight(1);
-  text(note_sequences[current_note_index], 50 + current_note_index * 50 + notes_text_offset, 100 + notes_text_offset);
+  text(notes_sequence[current_arrow_index], 50 + current_arrow_index * 50 + notes_text_offset, 0);
 }
 
 function emit(event) {
@@ -176,25 +197,25 @@ function keyPressed() {
       emit_t = true;
       break;
     case 65:
-      // console.log("current note index: " + current_note_index);
-      if (current_note_index == 0) {
+      // console.log("current note index: " + current_arrow_index);
+      if (current_arrow_index == 0) {
         console.log("no more notes before this one");
         return;
       }
-      num_arrows = note_sequences[current_note_index - 1] - note_sequences[current_note_index];
+      num_arrows = arrow_presses[current_arrow_index - 1];
       simulateArrows(num_arrows);
-      current_note_index--;
+      current_arrow_index--;
       break;
     case 68:
-      // console.log("current note index: " + current_note_index);
-      if (current_note_index == note_sequences.length - 1) {
+      // console.log("current note index: " + current_arrow_index);
+      if (current_arrow_index == arrow_presses.length - 1) {
         console.log("no more notes after this one");
         return;
       }
 
-      num_arrows = note_sequences[current_note_index + 1] - note_sequences[current_note_index];
+      num_arrows = arrow_presses[current_arrow_index + 1];
       simulateArrows(num_arrows);
-      current_note_index++;
+      current_arrow_index++;
       break;
   }
 
@@ -210,6 +231,48 @@ function keyPressed() {
 
   if (emit_o) emit("orientation");
   else if (emit_t) emit("tilt");
+}
+
+
+// autopilot helers
+
+// Function to generate a random notes_sequence of 10 elements
+// function generateNotesSequence() {
+//   const notes_sequence = [];
+//   for (let i = 0; i < 10; i++) {
+//     const direction = Math.random() < 0.5 ? '-' : '+';
+//     const note = notes[Math.floor(Math.random() * notes.length)];
+//     notes_sequence.push(`${direction}${note}`);
+//   }
+//   return notes_sequence;
+// }
+//
+// const notes_sequence = generateNotesSequence();
+// console.log('Generated notes_sequence:', notes_sequence);
+
+// Function to calculate arrow presses needed to get from one element to the next in the notes_sequence
+function arrowPressesToElement(currentNote, nextElement) {
+  const direction = nextElement[0];
+  const targetNote = parseInt(nextElement.slice(1), 10);
+  let currentIndex = notes.indexOf(currentNote);
+  let targetIndex = notes.indexOf(targetNote);
+  let arrowPresses = 0;
+
+  if (direction === '+') {
+    while (currentIndex !== targetIndex) {
+      currentIndex = (currentIndex + 1) % notes.length;
+      arrowPresses++;
+    }
+  } else if (direction === '-') {
+    while (currentIndex !== targetIndex) {
+      currentIndex = (currentIndex - 1 + notes.length) % notes.length;
+      arrowPresses++;
+    }
+    // Negate arrowPresses for left direction
+    arrowPresses = -arrowPresses;
+  }
+
+  return arrowPresses;
 }
 
 function simulateArrows(num_arrows) {
