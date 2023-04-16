@@ -19,7 +19,11 @@ let onlySetTilt = 0;
 // notes and arrows sequence
 // 1. Declare predefined notes list
 const notes = [1, 2, 3, 4, 5, 6, 7];
-const notes_sequence = ["+1", "+4", "-7", "+3", "-6", "-4", "+7", "-3"]
+const notes_preset = {
+  "1": ["+1", "+4", "-7", "+3", "-6", "-4", "+7", "-3"],
+  "2": ["+1", "+4", "-7", "+3", "-6", "-4", "+7", "-2"]
+}
+let notes_sequence = notes_preset["1"]
 
 // 2. Loop to calculate and store arrow presses for each pair of elements in the notes_sequence
 const startingNote = 1;
@@ -50,6 +54,9 @@ socket.on("connect", function () {
 
   // Tell me which side I am
   socket.emit("idx", { idx: idx, src: "control" });
+
+  // change the notes preset if I'm the second controller
+  notes_sequence = idx == "1"? notes_preset["1"] : notes_preset["2"]
 });
 
 function setup() {
@@ -202,7 +209,7 @@ function keyPressed() {
         console.log("no more notes before this one");
         return;
       }
-      num_arrows = arrow_presses[current_arrow_index - 1];
+      num_arrows = -arrow_presses[current_arrow_index];
       simulateArrows(num_arrows);
       current_arrow_index--;
       break;
