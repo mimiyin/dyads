@@ -19,3 +19,20 @@ span.current {
   font-weight: bold;
   font-size: 2em;
 }
+p#composition {
+  position: absolute;
+  top: 2em;
+  left: 2em;
+  font-family: Arial;
+  color: white;
+}
+
+span {
+  padding: 1em;
+}
+
+span.current {
+  color: red;
+  font-weight: bold;
+  font-size: 2em;
+}

@@ -128,20 +128,6 @@ function draw() {
   strokeWeight(5);
   line(0, 0, 0, -diag / 2);
   pop();
-
-  // Draw the notes sequence in white and mark the current note in red
-  // textSize(20);
-  // stroke("white");
-  // fill("white");
-  // strokeWeight(1);
-  // for (let i = 0; i < ARROW_PRESSES.length; i++) {
-  //   let note = NOTE_SEQUENCE[i];
-  //   text(note, 50 + i * 50 + notes_text_offset, 0);
-  // }
-  // stroke("red");
-  // fill("red");
-  // strokeWeight(1);
-  // text(NOTE_SEQUENCE[current_arrow_index], 50 + current_arrow_index * 50 + notes_text_offset, 0);
 }
 
 function emit(event) {
@@ -228,60 +214,3 @@ function keyPressed(e) {
   else if (emit_t) emit("tilt");
 }
 
-// Change note
-function updateCurrentArrowIndex(change) {
-  try {
-    select("#idx-count-" + idx + "-" + current_arrow_index).removeClass("current");
-  } catch (e) {
-    console.log("Nothing to remove.");
-  }
-  current_arrow_index += change;
-  select("#idx-count-" + idx + "-" + current_arrow_index).addClass("current")
-}
-
-// Function to calculate arrow presses needed to get from one element to the next in the NOTE_SEQUENCE
-function arrowPressesToElement(currentNote, nextElement) {
-  const direction = nextElement[0];
-  
-  // Don't bother
-  if(direction == '=') return 0;
-
-  const targetNote = parseInt(nextElement.slice(1), 10);
-  let currentIndex = NOTES.indexOf(currentNote);
-  let targetIndex = NOTES.indexOf(targetNote);
-  let arrowPresses = 0;
-
-  // // Account for jumping octaves
-  if (currentIndex == targetIndex) {
-    arrowPresses = direction === '+' ? 7 : -7;
-  } else if (direction === '+') {
-    while (currentIndex !== targetIndex) {
-      currentIndex = (currentIndex + 1) % NOTES.length;
-      arrowPresses++;
-    }
-  } else if (direction === '-') {
-    while (currentIndex !== targetIndex) {
-      currentIndex = (currentIndex - 1 + NOTES.length) % NOTES.length;
-      arrowPresses--;
-    }
-  }
-
-  return arrowPresses;
-}
-
-// Simulating keypresses for auto-manual mode
-function simulateArrows(num_arrows) {
-  if (num_arrows < 0) {
-    for (let i = 0; i < abs(num_arrows); i++) {
-      console.log("Go down");
-      keyCode = LEFT_ARROW;
-      keyPressed();
-    }
-  } else {
-    for (let i = 0; i < num_arrows; i++) {
-      console.log("Go up!");
-      keyCode = RIGHT_ARROW;
-      keyPressed();
-    }
-  }
-}
