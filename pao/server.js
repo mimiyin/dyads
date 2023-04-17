@@ -74,8 +74,8 @@ io.on('connection', function(socket) {
     let o = message.o;
     let t = message.t;
 
-    //print_data('o', message.src, message.idx, ohs, message.o)
-    //print_data('t', message.src, message.idx, tees, message.t)
+    print_data('o', message.src, message.idx, ohs, message.o)
+    // print_data('t', message.src, message.idx, tees, message.t)
 
 
     // Send it to all of the output clients

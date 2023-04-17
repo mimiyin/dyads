@@ -28,8 +28,8 @@ const ANGLE_MIN = 30;
 const ANGLE_MAX = 180;
 const INTERVAL_MIN = 0.375
 const OFFSETS = {
-  'board/1': 60,
-  'board/2': 30,
+  'board/1': 240,
+  'board/2': 285,
   'control/1': 0,
   'control/2': 0
 };
@@ -44,6 +44,7 @@ let mode = 1;
 let onlySetRate = 0;
 let onlySetInterval = 0;
 let start = false;
+let record = false;
 let source = "control";
 
 // Battery data
@@ -432,6 +433,14 @@ function keyPressed() {
     case 'x':
       source = "board";
       break;
+    case 'r':
+      record = !record;
+      socket.emit('record', record);
+      break;
+    case 's':
+      start = !start;
+      socket.emit('start', start);
+      break;
   }
 
 
@@ -441,14 +450,6 @@ function keyPressed() {
     mode = key;
     socket.emit('mode', key);
     changeMode();
-  } else if (key == 's') {
-    start = !start;
-    console.log(start ? 'start' : 'stop');
-    socket.emit(start ? 'start' : 'stop');
-    if (start) {
-      socket.emit('rate', { idx: 1, rate: 1 });
-      socket.emit('rate', { idx: 2, rate: 1 });
-    }
   }
 }
 
