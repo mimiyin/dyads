@@ -16,31 +16,8 @@ let idx = 0;
 let onlySetRate = 1;
 let onlySetTilt = 0;
 
-// notes and arrows sequence
-// 1. Declare predefined notes list
-const notes = [1, 2, 3, 4, 5, 6, 7];
-const notes_sequence = ["+1", "+4", "-7", "+3", "-6", "-4", "+7", "-3"]
-
-// 2. Loop to calculate and store arrow presses for each pair of elements in the notes_sequence
-const startingNote = 1;
-const arrow_presses = [];
-
-let currentNote = startingNote;
-for (let i = 0; i < notes_sequence.length; i++) {
-  const nextElement = notes_sequence[i];
-  const arrowPresses = arrowPressesToElement(currentNote, nextElement);
-  arrow_presses.push(arrowPresses);
-  currentNote = parseInt(nextElement.slice(1), 10); // Update currentNote for the next iteration
-}
-
-console.log('Arrow presses calculated are: ', arrow_presses);
-
-// 3. defualts for autopilot
-let current_arrow_index = 0;
-let notes_text_offset = -600; // display offset for x of the notes sequence
-
 // Listen for confirmation of connection
-socket.on("connect", function () {
+socket.on("connect", function() {
   console.log("Connected");
 
   // Get userid
@@ -49,7 +26,24 @@ socket.on("connect", function () {
   console.log("IDX", idx);
 
   // Tell me which side I am
-  socket.emit("idx", { idx: idx, src: "control" });
+  socket.emit("idx", {
+    idx: idx,
+    src: "control"
+  });
+
+  // Load note sequence
+  roll_notes(idx);
+
+  // Load interstitial calculations
+  for (let i = 0; i < NOTE_SEQUENCE.length; i++) {
+    const nextElement = NOTE_SEQUENCE[i];
+    let arrowPresses = arrowPressesToElement(currentNote, nextElement);
+    ARROW_PRESSES.push(arrowPresses);
+    currentNote = parseInt(nextElement.slice(1), 10); // Update currentNote for the next iteration
+  }
+
+  console.log('Arrow presses calculated are: ', ARROW_PRESSES);
+
 });
 
 function setup() {
@@ -59,6 +53,9 @@ function setup() {
   rectMode(CENTER);
   strokeCap(PROJECT);
 
+  // Display notes
+  display_notes();
+
   // Calculate length of diagonal of screen
   diag = sqrt(sq(width) + sq(height));
 
@@ -66,21 +63,21 @@ function setup() {
   frameRate(30);
 
   // Listen for orientation data
-  socket.on("orientation", function (message) {
+  socket.on("orientation", function(message) {
     console.log("O! ", message.idx, nfs(message.o, 0, 2));
     let _idx = message.idx;
     if (_idx == idx) board_o = message.o;
   });
 
   // Listen for turning off level
-  socket.on('only set rate', function (data) {
+  socket.on('only set rate', function(data) {
     console.log("ONLY SET RATE", data);
     onlySetRate = data;
     if (onlySetRate) onlySetTilt = 0;
   });
 
   // Listen for turning off orientation
-  socket.on('only set tilt', function (data) {
+  socket.on('only set tilt', function(data) {
     console.log("ONLY SET TILT", data);
     onlySetTilt = data;
     if (onlySetTilt) onlySetRate = 0;
@@ -133,23 +130,23 @@ function draw() {
   pop();
 
   // Draw the notes sequence in white and mark the current note in red
-  textSize(20);
-  stroke("white");
-  fill("white");
-  strokeWeight(1);
-  for (let i = 0; i < arrow_presses.length; i++) {
-    let note = notes_sequence[i];
-    text(note, 50 + i * 50 + notes_text_offset, 0);
-  }
-  stroke("red");
-  fill("red");
-  strokeWeight(1);
-  text(notes_sequence[current_arrow_index], 50 + current_arrow_index * 50 + notes_text_offset, 0);
+  // textSize(20);
+  // stroke("white");
+  // fill("white");
+  // strokeWeight(1);
+  // for (let i = 0; i < ARROW_PRESSES.length; i++) {
+  //   let note = NOTE_SEQUENCE[i];
+  //   text(note, 50 + i * 50 + notes_text_offset, 0);
+  // }
+  // stroke("red");
+  // fill("red");
+  // strokeWeight(1);
+  // text(NOTE_SEQUENCE[current_arrow_index], 50 + current_arrow_index * 50 + notes_text_offset, 0);
 }
 
 function emit(event) {
 
-  console.log("event name " + event);
+  console.log("event name " + o);
   // Create message
   let message = {
     idx: idx,
@@ -160,8 +157,7 @@ function emit(event) {
   if (event == "orientation") {
     if (onlySetTilt) return;
     message.o = o;
-  }
-  else if (event == "tilt") {
+  } else if (event == "tilt") {
     if (onlySetRate) return;
     message.t = t;
   }
@@ -171,8 +167,7 @@ function emit(event) {
 
 }
 
-function keyPressed() {
-
+function keyPressed(e) {
 
   // Controlling what?
   let emit_o = false;
@@ -196,26 +191,26 @@ function keyPressed() {
       t += 10;
       emit_t = true;
       break;
-    case 65:
-      // console.log("current note index: " + current_arrow_index);
+    case 65: // a
+      console.log("current note index: " + current_arrow_index);
       if (current_arrow_index == 0) {
         console.log("no more notes before this one");
         return;
       }
-      num_arrows = arrow_presses[current_arrow_index - 1];
+      num_arrows = -ARROW_PRESSES[current_arrow_index];
       simulateArrows(num_arrows);
-      current_arrow_index--;
+      updateCurrentArrowIndex(-1);
       break;
-    case 68:
+    case 68: // d
       // console.log("current note index: " + current_arrow_index);
-      if (current_arrow_index == arrow_presses.length - 1) {
+      if (current_arrow_index == ARROW_PRESSES.length - 1) {
         console.log("no more notes after this one");
         return;
       }
 
-      num_arrows = arrow_presses[current_arrow_index + 1];
+      num_arrows = ARROW_PRESSES[current_arrow_index + 1];
       simulateArrows(num_arrows);
-      current_arrow_index++;
+      updateCurrentArrowIndex(1);
       break;
   }
 
@@ -233,57 +228,58 @@ function keyPressed() {
   else if (emit_t) emit("tilt");
 }
 
+// Change note
+function updateCurrentArrowIndex(change) {
+  try {
+    select("#idx-count-" + idx + "-" + current_arrow_index).removeClass("current");
+  } catch (e) {
+    console.log("Nothing to remove.");
+  }
+  current_arrow_index += change;
+  select("#idx-count-" + idx + "-" + current_arrow_index).addClass("current")
+}
 
-// autopilot helers
-
-// Function to generate a random notes_sequence of 10 elements
-// function generateNotesSequence() {
-//   const notes_sequence = [];
-//   for (let i = 0; i < 10; i++) {
-//     const direction = Math.random() < 0.5 ? '-' : '+';
-//     const note = notes[Math.floor(Math.random() * notes.length)];
-//     notes_sequence.push(`${direction}${note}`);
-//   }
-//   return notes_sequence;
-// }
-//
-// const notes_sequence = generateNotesSequence();
-// console.log('Generated notes_sequence:', notes_sequence);
-
-// Function to calculate arrow presses needed to get from one element to the next in the notes_sequence
+// Function to calculate arrow presses needed to get from one element to the next in the NOTE_SEQUENCE
 function arrowPressesToElement(currentNote, nextElement) {
   const direction = nextElement[0];
+  
+  // Don't bother
+  if(direction == '=') return 0;
+
   const targetNote = parseInt(nextElement.slice(1), 10);
-  let currentIndex = notes.indexOf(currentNote);
-  let targetIndex = notes.indexOf(targetNote);
+  let currentIndex = NOTES.indexOf(currentNote);
+  let targetIndex = NOTES.indexOf(targetNote);
   let arrowPresses = 0;
 
-  if (direction === '+') {
+  // // Account for jumping octaves
+  if (currentIndex == targetIndex) {
+    arrowPresses = direction === '+' ? 7 : -7;
+  } else if (direction === '+') {
     while (currentIndex !== targetIndex) {
-      currentIndex = (currentIndex + 1) % notes.length;
+      currentIndex = (currentIndex + 1) % NOTES.length;
       arrowPresses++;
     }
   } else if (direction === '-') {
     while (currentIndex !== targetIndex) {
-      currentIndex = (currentIndex - 1 + notes.length) % notes.length;
-      arrowPresses++;
+      currentIndex = (currentIndex - 1 + NOTES.length) % NOTES.length;
+      arrowPresses--;
     }
-    // Negate arrowPresses for left direction
-    arrowPresses = -arrowPresses;
   }
 
   return arrowPresses;
 }
 
+// Simulating keypresses for auto-manual mode
 function simulateArrows(num_arrows) {
-  // console.log("Simulating " + num_arrows + " arrows");
   if (num_arrows < 0) {
     for (let i = 0; i < abs(num_arrows); i++) {
+      console.log("Go down");
       keyCode = LEFT_ARROW;
       keyPressed();
     }
   } else {
     for (let i = 0; i < num_arrows; i++) {
+      console.log("Go up!");
       keyCode = RIGHT_ARROW;
       keyPressed();
     }

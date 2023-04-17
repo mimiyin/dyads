@@ -74,8 +74,8 @@ io.on('connection', function(socket) {
     let o = message.o;
     let t = message.t;
 
-    //print_data('o', message.src, message.idx, ohs, message.o)
-    //print_data('t', message.src, message.idx, tees, message.t)
+    print_data('o', message.src, message.idx, ohs, message.o)
+    // print_data('t', message.src, message.idx, tees, message.t)
 
 
     // Send it to all of the output clients
@@ -114,6 +114,16 @@ controls.on('connection', function(socket) {
 
   // Tell inputs what data to send
   update_mode();
+  
+  // Listen for id
+  socket.on('idx', function(message) {
+    console.log(message.src + '-' + message.idx + ' connected.');
+    socket.idx = message.idx;
+    outputs.emit('idx', {
+      idx : message.idx,
+      src: message.src
+    });
+  });
 
   // Listen for orientation and tilt data
   socket.on('orientation', function(message) {
@@ -195,14 +205,14 @@ outputs.on('connection', function(socket) {
     update_mode();
   });
 
-  // Stop the music
-  socket.on('stop', function() {
-    io.emit('stop');
+  // Start recording
+  socket.on('record', function(data) {
+    io.emit('record', data);
   });
 
   // Start the music
-  socket.on('start', function() {
-    io.emit('start');
+  socket.on('start', function(data) {
+    io.emit('start', data);
   });
 
   // Listen for this input client to disconnect
