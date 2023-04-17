@@ -195,14 +195,14 @@ outputs.on('connection', function(socket) {
     update_mode();
   });
 
-  // Stop the music
-  socket.on('stop', function() {
-    io.emit('stop');
+  // Start recording
+  socket.on('record', function(data) {
+    io.emit('record', data);
   });
 
   // Start the music
-  socket.on('start', function() {
-    io.emit('start');
+  socket.on('start', function(data) {
+    io.emit('start', data);
   });
 
   // Listen for this input client to disconnect

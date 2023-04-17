@@ -124,8 +124,9 @@ function draw() {
   // Change rate
   textSize(16);
   fill(255);
-  let status = start ? "(S)tarted" : "(S)topped";
-  text('Power: ' + bat + '\t' + status + '\t(X/C)Source: ' + source + '\t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 10, 20);
+  let st = start ? "(S)tarted" : "(S)topped";
+  let rec = record? "(R)ec" : "!(R)ec";
+  text('Power: ' + bat + '\t' + st + '\t' + rec + '\t(X/C)Source: ' + source + '\t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 10, 20);
 }
 
 class User {
