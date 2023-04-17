@@ -17,7 +17,7 @@ socket.on("connect", function() {
 let users = {};
 
 // Reference point
-let base = 0.5;
+let base = 1;
 
 // Intervals
 let interval_max = 3;
@@ -44,7 +44,7 @@ let mode = 1;
 let onlySetRate = 0;
 let onlySetInterval = 0;
 let start = false;
-let source = "board";
+let source = "control";
 
 // Battery data
 let bat = 0;
@@ -81,7 +81,7 @@ function setup() {
     let src = message.src;
 
     // Nevermind if not on the right source
-    if(source !== src) return;
+    if (source !== src) return;
 
     let user = getOrCreate(idx, src);
     user.updatePitch(o);
@@ -94,7 +94,7 @@ function setup() {
     let src = message.src;
 
     // Nevermind if not on the right source
-    if(source !== src) return;
+    if (source !== src) return;
 
     let user = getOrCreate(idx, src);
     user.updateTempo(t);
@@ -123,7 +123,8 @@ function draw() {
   // Change rate
   textSize(16);
   fill(255);
-  text('Power: ' + bat + '\t(S)tart/(S)top \t(X/C)Source: '+ source   + '\t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 10, 20);
+  let status = start ? "(S)tarted" : "(S)topped";
+  text('Power: ' + bat + '\t' + status + '\t(X/C)Source: ' + source + '\t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 10, 20);
 }
 
 class User {
@@ -422,7 +423,7 @@ function keyPressed() {
       base /= 2;
       for (let u in users) {
         let user = users[u];
-        user.setBase();
+        user.setBase(base);
       }
       break;
     case 'c':
@@ -442,8 +443,12 @@ function keyPressed() {
     changeMode();
   } else if (key == 's') {
     start = !start;
-    console.log(start ? 'stop' : 'start');
-    socket.emit(start ? 'stop' : 'start');
+    console.log(start ? 'start' : 'stop');
+    socket.emit(start ? 'start' : 'stop');
+    if (start) {
+      socket.emit('rate', { idx: 1, rate: 1 });
+      socket.emit('rate', { idx: 2, rate: 1 });
+    }
   }
 }
 
