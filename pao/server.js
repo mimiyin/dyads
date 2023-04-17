@@ -114,6 +114,16 @@ controls.on('connection', function(socket) {
 
   // Tell inputs what data to send
   update_mode();
+  
+  // Listen for id
+  socket.on('idx', function(message) {
+    console.log(message.src + '-' + message.idx + ' connected.');
+    socket.idx = message.idx;
+    outputs.emit('idx', {
+      idx : message.idx,
+      src: message.src
+    });
+  });
 
   // Listen for orientation and tilt data
   socket.on('orientation', function(message) {

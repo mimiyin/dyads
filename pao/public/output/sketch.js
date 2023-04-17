@@ -441,6 +441,8 @@ function keyPressed() {
     case 's':
       start = !start;
       socket.emit('start', start);
+      socket.emit('rate', { idx: 1, rate : 1 });
+      socket.emit('rate', { idx : 2, rate : 1 });
       break;
   }
 
