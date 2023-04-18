@@ -10,7 +10,11 @@ const OFFSET = 0;
 
 // Open and connect input socket
 let socket = io('/control');
-let idx = 0;
+
+// Get userid
+let params = new URL(document.location).searchParams;
+let idx = params.get("idx") || 0;
+console.log("IDX", idx);
 
 // Mode
 let onlySetRate = 1;
@@ -19,11 +23,6 @@ let onlySetTilt = 0;
 // Listen for confirmation of connection
 socket.on("connect", function() {
   console.log("Connected");
-
-  // Get userid
-  let params = new URL(document.location).searchParams;
-  idx = params.get("idx") || 0;
-  console.log("IDX", idx);
 
   // Tell me which side I am
   socket.emit("idx", {
@@ -132,7 +131,7 @@ function draw() {
 
 function emit(event) {
 
-  console.log("event name " + o);
+  console.log(event + ": " + o + "\t" + t);
   // Create message
   let message = {
     idx: idx,
@@ -178,7 +177,7 @@ function keyPressed(e) {
       emit_t = true;
       break;
     case 65: // a
-      console.log("current note index: " + current_arrow_index);
+      //console.log("current note index: " + current_arrow_index);
       if (current_arrow_index == 0) {
         console.log("no more notes before this one");
         return;
@@ -213,4 +212,3 @@ function keyPressed(e) {
   if (emit_o) emit("orientation");
   else if (emit_t) emit("tilt");
 }
-

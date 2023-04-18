@@ -67,6 +67,7 @@ const COMPOSITION = {
   }
 }
 
+// Sequence of notes to cycle through
 const NOTE_SEQUENCE = [];
 
 function roll_notes(idx) {
@@ -83,33 +84,55 @@ function roll_notes(idx) {
 // Display notes in DOM elements
 function display_notes() {
   let counters = {
-    1 : 0,
-    2 : 0
+    1: 0,
+    2: 0
   };
   let compP = select('#composition');
   for (let m in COMPOSITION) {
     let movement = COMPOSITION[m];
-    let mp = createP();
+    let movementP = createP();
     let title = createP(m);
-    title.parent(mp);
-    mp.parent(compP)
+    title.parent(movementP);
+    movementP.parent(compP)
     for (let s in movement) {
       let section = movement[s];
-      let sp = createP();
-      sp.parent(mp);
-      for(let idx in section) {
-        let idxp = createP();
-        let title = createSpan(idx + ":\t");
-        title.parent(idxp);
-        idxp.parent(sp);
-        let sequence = section[idx];
-        for(let note of sequence) {
+      let sectionP = createP();
+      sectionP.parent(movementP);
+      for (let thisIdx in section) {
+        let thisIdxP = createP();
+        let title = createSpan(thisIdx + ":\t");
+        title.parent(thisIdxP);
+        thisIdxP.parent(sectionP);
+        thisIdxP.addClass(thisIdx == idx ? "me" : "not-me");
+        let sequence = section[thisIdx];
+        for (let note of sequence) {
           let notesp = createSpan();
-          notesp.attribute("id", "idx-count-" + idx + "-" + counters[idx]++);
-          notesp.parent(idxp);
+          let count = counters[thisIdx]++
+          notesp.attribute("id", "idx-count-" + thisIdx + "-" + count);
+          if (count == 0 && thisIdx == idx) notesp.addClass("current");
+          notesp.parent(thisIdxP);
+          notesp.addClass("note");
           notesp.html(note);
+          // FF feature
+          notesp.mousePressed(() => jump(count));
         }
       }
+    }
+  }
+}
+
+// Speed feature
+function jump(to) {
+  if (current_arrow_index < to) {
+    for (let c = current_arrow_index; c < to; c++) {
+        keyCode = 68;
+        keyPressed();
+    }
+  }
+  else {
+    for (let c = current_arrow_index; c > to; c--) {
+        keyCode = 65;
+        keyPressed();
     }
   }
 }
@@ -128,9 +151,9 @@ function updateCurrentArrowIndex(change) {
 // Function to calculate arrow presses needed to get from one element to the next in the NOTE_SEQUENCE
 function arrowPressesToElement(currentNote, nextElement) {
   const direction = nextElement[0];
-  
+
   // Don't bother
-  if(direction == '=') return 0;
+  if (direction == '=') return 0;
 
   const targetNote = parseInt(nextElement.slice(1), 10);
   let currentIndex = NOTES.indexOf(currentNote);

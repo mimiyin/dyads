@@ -10,6 +10,10 @@ p#composition {
   color: white;
 }
 
+p.not-me {
+  opacity: 0.25;
+}
+
 span {
   padding: 1em;
 }
@@ -31,8 +35,10 @@ span {
   padding: 1em;
 }
 
-span.current {
-  color: red;
-  font-weight: bold;
-  font-size: 2em;
+p.me span.note {
+  cursor: pointer;
+}
+
+p.not-me span.note {
+  cursor: not-allowed;
 }
