@@ -58,6 +58,7 @@ io.on('connection', function(socket) {
   socket.on('idx', function(message) {
     console.log(message.src + '-' + message.idx + ' connected.');
     socket.idx = message.idx;
+    socket.src = message.src;
     outputs.emit('idx', {
       idx : message.idx,
       src: message.src
@@ -119,6 +120,7 @@ controls.on('connection', function(socket) {
   socket.on('idx', function(message) {
     console.log(message.src + '-' + message.idx + ' connected.');
     socket.idx = message.idx;
+    socket.src = message.src;
     outputs.emit('idx', {
       idx : message.idx,
       src: message.src
@@ -219,7 +221,10 @@ outputs.on('connection', function(socket) {
   // Tell all of the output clients this client disconnected
   socket.on('disconnect', function() {
     console.log("An output client has disconnected " + socket.id);
-    io.emit('disconnected', socket.side);
+    io.emit('disconnected', {
+      idx : socket.idx,
+      src : socket.src
+    });
   });
 });
 

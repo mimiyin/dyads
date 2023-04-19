@@ -107,8 +107,8 @@ function setup() {
   })
 
   // Remove disconnected users
-  socket.on("disconnect", function(id) {
-    delete users[id];
+  socket.on("disconnect", function(message) {
+    delete users[createId(message.idx, message.src)];
   });
 }
 
