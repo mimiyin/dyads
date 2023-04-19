@@ -68,7 +68,7 @@ io.on('connection', function(socket) {
   // Listen for orientation and tilt data
   socket.on('message', function(message) {
     // Data comes in as whatever was sent, including objects'
-    
+
     // Unpack message
     let idx = message.idx;
     let src = message.src;
@@ -100,6 +100,10 @@ io.on('connection', function(socket) {
   // Listen for this output client to disconnect
   socket.on('disconnect', function() {
     console.log("A player or board client has disconnected " + socket.id);
+    outputs.emit('disconnected', {
+      idx : socket.idx,
+      src : socket.src
+    });
   });
 });
 
@@ -115,7 +119,7 @@ controls.on('connection', function(socket) {
 
   // Tell inputs what data to send
   update_mode();
-  
+
   // Listen for id
   socket.on('idx', function(message) {
     console.log(message.src + '-' + message.idx + ' connected.');
@@ -154,6 +158,10 @@ controls.on('connection', function(socket) {
   // Listen for this output client to disconnect
   socket.on('disconnect', function() {
     console.log("A control client has disconnected " + socket.id);
+    outputs.emit('disconnected', {
+      idx : socket.idx,
+      src : socket.src
+    });
   });
 });
 
@@ -221,10 +229,6 @@ outputs.on('connection', function(socket) {
   // Tell all of the output clients this client disconnected
   socket.on('disconnect', function() {
     console.log("An output client has disconnected " + socket.id);
-    io.emit('disconnected', {
-      idx : socket.idx,
-      src : socket.src
-    });
   });
 });
 
@@ -259,8 +263,8 @@ function print_data(label, src, idx, dataObj, data) {
       let id= src + '-' + idx;
       dataObj[id] = data;
       let str = label + ' ';
-      Object.keys(dataObj).forEach(key=>{ 
-        str +=  key + ' ' + dataObj[key] + '\t'; 
+      Object.keys(dataObj).forEach(key=>{
+        str +=  key + ' ' + dataObj[key] + '\t';
       });
       console.log(str);
 }
