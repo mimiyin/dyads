@@ -96,7 +96,7 @@ function draw() {
   // Draw all the notes in the diatonic scale
 
   push();
-  rotate(90);
+  rotate(-90);
   for (let r = 0; r < ratios.length; r++) {
     let rat = ratios[r];
     let angle = map(rat.num / rat.den, 1, 2, 0, 360);
@@ -210,7 +210,7 @@ function keyPressed(e) {
       simulateArrows(num_arrows);
       updateCurrentArrowIndex(-1);
       break;
-    case 32: // SPACEBAR
+    case 32 || 49: // SPACEBAR
       // console.log("current note index: " + current_arrow_index);
       if (current_arrow_index == ARROW_PRESSES.length - 1) {
         console.log("no more notes after this one");
