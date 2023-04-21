@@ -29,7 +29,7 @@ const ANGLE_MAX = 180;
 const INTERVAL_MIN = 0.375
 const OFFSETS = {
   'board/1': 240,
-  'board/2': 285,
+  'board/2': 240,
   'control/1': 0,
   'control/2': 0
 };
@@ -46,9 +46,6 @@ let onlySetInterval = 0;
 let start = false;
 let record = false;
 let source = "control";
-
-// Battery data
-let bat = 0;
 
 // Create new users
 function createId(idx, src) {
@@ -78,33 +75,40 @@ function setup() {
   // Listen for new orientation data
   socket.on("orientation", function(message) {
     let idx = message.idx;
-    let o = message.o;
     let src = message.src;
+    let o = message.o;
+    let b = message.b;
 
     // Nevermind if not on the right source
     if (source !== src) return;
 
     let user = getOrCreate(idx, src);
     user.updatePitch(o);
+    user.updateBat(b);
   });
 
   // Listen for new tilt data
   socket.on("tilt", function(message) {
     let idx = message.idx;
-    let t = message.t;
     let src = message.src;
+    let t = message.t;
+    let b = message.b;
 
     // Nevermind if not on the right source
     if (source !== src) return;
 
     let user = getOrCreate(idx, src);
     user.updateTempo(t);
+    user.updateBat(b);
   });
 
-  // Listen for battery
-  socket.on("bat", function(_bat) {
-    bat = _bat;
-  })
+  // Listen for changes to offset
+  socket.on("offset", function(message){
+    let _idx = message.idx;
+    let off = message.off;
+    let id = createId(_idx, 'board');
+    users[id].updateOffset(off);
+  });
 
   // Remove disconnected users
   socket.on("disconnected", function(message) {
@@ -128,7 +132,7 @@ function draw() {
   fill(255);
   let st = start ? "(S)tarted" : "(S)topped";
   let rec = record? "(R)ec" : "!(R)ec";
-  text('Power: ' + bat + '\t' + st + '\t' + rec + '\t(X/C)Source: ' + source + '\t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 10, 20);
+  text(st + '\t' + rec + '\t(X/C)Source: ' + source + '\t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 10, 20);
 }
 
 class User {
@@ -141,6 +145,7 @@ class User {
     let y = height * (this.src == 'board' ? 0.34 : 0.67);
     this.loc = createVector(x, y);
     this.diam = 100;
+    this.bat = -1;
     this.init();
 
     console.log("New user: " + this.id);
@@ -173,6 +178,20 @@ class User {
     // Level stuff
     this.interval = -1;
   }
+
+  updateOffset(off) {
+    this.offset += off; 
+ 
+    // Wrap around
+    if(this.offset > 360) this.offset -= 360;
+    else if(this.offset < 0) this.offset = 360 + this.offset;
+
+    console.log("New offset: ", this.idx, this.offset);
+   }
+
+   updateBat(bat) {
+    this.bat = bat;
+   }
 
   // Need this to replay note when there's no change.
   resetOrientation() {
@@ -220,6 +239,14 @@ class User {
     this.o = o;
 
     //console.log("OFF", round(o), this.offset);
+       // Re-broadcast out orientation changes
+    if (this.src == "board") {
+      socket.emit("orientation", {
+        idx: this.idx,
+        o: this.o,
+        off : this.offset
+      });
+    }
 
     // Re-center orientation
     o -= this.offset;
@@ -259,14 +286,6 @@ class User {
     if (abs(ab) < 0.0175) {
       //console.log("Did not rotate enough.");
       return false;
-    }
-
-    // Re-broadcast out orientation changes
-    if (this.src == "board") {
-      socket.emit("orientation", {
-        idx: this.idx,
-        o: this.o - OFFSETS[this.id]
-      });
     }
 
     // Shifted
@@ -408,8 +427,16 @@ class User {
   }
 
   display() {
+    push();
+    translate(this.loc.x, this.loc.y);
     fill(this.src == 'board' ? "red" : "green");
-    ellipse(this.loc.x, this.loc.y, this.diam, this.diam);
+    ellipse(0, 0, this.diam, this.diam);
+    if(this.src == 'board') {
+      fill(255);
+      textAlign(CENTER, CENTER);
+      text(this.bat, 0, 0);
+    }
+    pop();
   }
 }
 

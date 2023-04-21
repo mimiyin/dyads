@@ -20,7 +20,7 @@ let io = require('socket.io')(server, {
 // Tell server where to look for files
 app.use(express.static('public'));
 
-let data_rate = 30000;
+let data_rate = 10000;
 let sample_rate = 20;
 let strike_th = 10;
 

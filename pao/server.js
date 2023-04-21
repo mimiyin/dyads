@@ -34,7 +34,7 @@ let io = require('socket.io')(server, {
 
 // Local variables
 let mode = 1;
-let data_rate = 20;
+let data_rate = 100;
 let sample_rate = 20;
 
 let ohs = {};
@@ -74,6 +74,8 @@ io.on('connection', function(socket) {
     let src = message.src;
     let o = message.o;
     let t = message.t;
+    // Send battery data
+    let b = message.bat || "NULL";
 
     print_data('o', message.src, message.idx, ohs, message.o)
     // print_data('t', message.src, message.idx, tees, message.t)
@@ -83,18 +85,18 @@ io.on('connection', function(socket) {
     if(mode <= 2) outputs.emit('orientation', {
       idx : idx,
       src : src,
-      o : o
+      o : o,
+      b : b
     });
 
     // Send it to all of the output clients
     if(mode > 1) outputs.emit('tilt', {
       idx : idx,
       src : src,
-      t : t
+      t : t,
+      b : b
     });
 
-    // Send battery data
-    outputs.emit('bat', message.bat);
   });
 
   // Listen for this output client to disconnect

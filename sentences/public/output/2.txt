@@ -5,18 +5,9 @@ mmm
 yes1
 yes1
 yyes1 yyes4 yyes5 yyes6 yyes7 yyes8
-maybe probably possibly
+maybe probably1 probably2 probably3 possibly
 need want1 know think
-this that
-this that
 or
 or
-or
-yes1 no1 no2 no3 no4 no1 no1
-yes1 no1 no2 no3 no4 no1 no1
-yes1 yes2
-all want1
-i need
 yes1
-i need
-no4
+this that

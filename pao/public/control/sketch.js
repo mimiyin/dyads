@@ -1,12 +1,13 @@
 // Get orientation
 let o = 0;
 let board_o = 0;
+let board_off = 0;
 let t = 0;
 // Current angle
 let a = 0;
 
 // OFFSET
-const OFFSET = 0;
+let off = 0;
 
 // Open and connect input socket
 let socket = io('/control');
@@ -63,9 +64,12 @@ function setup() {
 
   // Listen for orientation data
   socket.on("orientation", function(message) {
-    console.log("O! ", message.idx, nfs(message.o, 0, 2));
     let _idx = message.idx;
-    if (_idx == idx) board_o = message.o;
+    if (_idx == idx) {
+      console.log("O! ", message.idx, nfs(message.o, 0, 2));
+      board_o = message.o;
+      board_off = message.off;
+    }
   });
 
   // Listen for turning off level
@@ -92,7 +96,7 @@ function draw() {
   // Draw all the notes in the diatonic scale
 
   push();
-  rotate(OFFSET - 90);
+  rotate(90);
   for (let r = 0; r < ratios.length; r++) {
     let rat = ratios[r];
     let angle = map(rat.num / rat.den, 1, 2, 0, 360);
@@ -115,7 +119,7 @@ function draw() {
   pop();
 
   push();
-  rotate(OFFSET + o);
+  rotate(o);
   stroke("red");
   strokeWeight(20);
   line(0, 0, 0, -diag / 2);
@@ -127,6 +131,15 @@ function draw() {
   strokeWeight(5);
   line(0, 0, 0, -diag / 2);
   pop();
+
+
+  push();
+  rotate((180 - (board_o - board_off)));
+  stroke("green");
+  strokeWeight(5);
+  line(0, 0, 0, -diag / 2);
+  pop();
+
 }
 
 function emit(event) {
@@ -154,6 +167,17 @@ function emit(event) {
 
 function keyPressed(e) {
 
+  switch (key) {
+    case 'a':
+      off--;
+      socket.emit('offset', { idx : idx, off : -1 });
+      return;
+    case 's' :
+      off++;
+      socket.emit('offset', { idx : idx, off : 1 });
+      return;
+  }
+
   // Controlling what?
   let emit_o = false;
   let emit_t = false;
@@ -176,7 +200,7 @@ function keyPressed(e) {
       t += 10;
       emit_t = true;
       break;
-    case 65: // a
+    case CONTROL: // CONTROL
       //console.log("current note index: " + current_arrow_index);
       if (current_arrow_index == 0) {
         console.log("no more notes before this one");
@@ -186,7 +210,7 @@ function keyPressed(e) {
       simulateArrows(num_arrows);
       updateCurrentArrowIndex(-1);
       break;
-    case 68: // d
+    case 32: // SPACEBAR
       // console.log("current note index: " + current_arrow_index);
       if (current_arrow_index == ARROW_PRESSES.length - 1) {
         console.log("no more notes after this one");
