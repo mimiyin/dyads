@@ -18,8 +18,12 @@ class Ball {
     this.display();
   }
 
+  kill() {
+    this.counter = this.lifespan;
+  }
+
   died() {
-    return this.counter > this.lifespan;
+    return this.counter >= this.lifespan;
   }
 
   //Update function

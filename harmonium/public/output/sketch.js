@@ -272,13 +272,28 @@ function calcRatios() {
 function addBalls(num) {
   console.log("ADDING BALLS: ", num)
   for (let i = 0; i < num; i++) {
-    balls.push(new Ball(random(width), random(height), 20, 20, 0, random(-5, 5), 300 * num));
+    balls.push(new Ball(random(width), random(height), 20, 20, 0, 0, 300 * num));
+  }
+}
+
+function removeBall(num) {
+  console.log("REMOVING BALL: ", num)
+  for (let i = 0; i < num; i++) {
+    if(i >= balls.length) return;
+    balls[i].kill();
   }
 }
 
 // Manual mode
 function keyPressed() {
-  if (keyCode == ENTER) addBalls(1);
+  switch(keyCode) {
+    case ENTER:
+      addBalls(1);
+      break;
+    case BACKSPACE || DELETE:
+      removeBall(1);
+      break;
+  }
 }
 
 class User {
