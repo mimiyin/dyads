@@ -2,12 +2,13 @@
 yes1 no2
 noyoudont1 noyoudont2 noyoudont3
 youonlythinkyoudo
-yes2
-yyes1 yyes4 yes2 yes2 yes2 yes2
-yyes1 yyes4 yyes5 yyes6 yyes7 yyes8
+actually
+yes1 yes2
+yyes9 yyes10 yyes11 yyes12 yyes13 yyes14 yyes15
 yes1 no3 so1 not never ever
 i you
+i you
+this that
 or
 them yes1
-them
-is not or
+yes1
