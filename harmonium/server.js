@@ -40,10 +40,12 @@ io.on('connection', function(socket){
     outputs.emit('idx', message.idx);
   })
 
+
   // Listen for RFID contact
   socket.on('RFID', function(message){
     console.log(message.idx, "READER", message.reader, "ID", message.id);
     outputs.emit('contact', message);
+    console.log("BAT", message.idx, message.bat);
   });
 });
 

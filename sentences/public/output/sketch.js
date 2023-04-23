@@ -51,16 +51,25 @@ function setup() {
   //speech.setVoice('Google português do Brasil');
 
   socket.on("idx", function(message) {
-    let idx = message.idx;
-    users[idx] = new User(idx);
-    console.log("idx joined: ", idx);
+    let _idx = message.idx;
+    users[_idx] = new User(_idx);
+    console.log("idx joined: ", _idx);
   });
 
   // Listen for new data
-  socket.on("strike", function(idx) {
-    if (!(idx in users)) users[idx] = new User(idx);
-    let user = users[idx];
-    user.strike(idx);
+  socket.on("strike", function(_idx) {
+    if (!(_idx in users)) users[_idx] = new User(_idx);
+    let user = users[_idx];
+    user.strike(_idx);
+  });
+
+  // Listen for new battery data
+  socket.on('bat', function(message){
+    let _idx = message.idx;
+    if (!(_idx in users)) users[_idx] = new User(_idx);
+    let bat = message.bat;
+    let user = users[_idx];
+    user.bat = bat;
   });
 
   // Remove disconnected users
@@ -118,6 +127,8 @@ class User {
 
     this.idx = idx;
     this.go = true;
+
+    this.bat = -1;
   }
 
   run() {
@@ -140,9 +151,18 @@ class User {
   }
 
   display() {
-    noStroke();
-    fill('red');
-    ellipse(this.loc.x, this.loc.y, this.diam);
+    push();
+
+    translate(this.loc.x, this.loc.y);
+
+    fill("red");
+    ellipse(0, 0, this.diam, this.diam);
+
+    fill(255);
+    textAlign(CENTER, CENTER);
+    text(this.bat, 0, 0);
+    
+    pop();
   }
 
 }

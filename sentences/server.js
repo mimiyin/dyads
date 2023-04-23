@@ -20,7 +20,7 @@ let io = require('socket.io')(server, {
 // Tell server where to look for files
 app.use(express.static('public'));
 
-let data_rate = 10000;
+let data_rate = 5000;
 let sample_rate = 20;
 let strike_th = 10;
 
@@ -43,6 +43,12 @@ io.on('connection', function(socket){
   // Listen for strike data
   socket.on('message', function(message) {
     console.log("Received data:", message.idx, message.da);
+
+    // Send out battery info
+    outputs.emit('bat', {
+      idx : message.idx,
+      bat : message.bat
+    })
 
     // Send it to all of the output clients
     if(message.da > strike_th) outputs.emit('strike', message.idx);
