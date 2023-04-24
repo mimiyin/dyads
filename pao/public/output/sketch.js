@@ -102,7 +102,7 @@ function setup() {
     let src = message.src;
     let t = message.t;
     let b = message.b;
-    
+
     // Nevermind if not on the right source
     if (source !== src) return;
 
