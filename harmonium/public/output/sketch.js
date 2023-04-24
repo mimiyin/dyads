@@ -269,10 +269,11 @@ function calcRatios() {
 //   }
 // }
 
-function addBalls(num) {
+function addBalls(num, octave) {
   console.log("ADDING BALLS: ", num)
+  let w = octave || 3;
   for (let i = 0; i < num; i++) {
-    balls.push(new Ball(random(width), random(height), 20, 20, 0, 0, 300 * num));
+    balls.push(new Ball(random(w * width/3), random(height), 20, 20, 0, 0, 300 * num));
   }
 }
 
@@ -290,6 +291,8 @@ function keyPressed() {
     case ENTER:
       addBalls(1);
       break;
+    case SHIFT:
+      addBalls(1, 1);
     case BACKSPACE || DELETE:
       removeBall(1);
       break;

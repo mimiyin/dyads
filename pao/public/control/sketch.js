@@ -200,7 +200,7 @@ function keyPressed(e) {
       t += 10;
       emit_t = true;
       break;
-    case CONTROL: // CONTROL
+    case SHIFT:
       //console.log("current note index: " + current_arrow_index);
       if (current_arrow_index == 0) {
         console.log("no more notes before this one");
@@ -210,7 +210,7 @@ function keyPressed(e) {
       simulateArrows(num_arrows);
       updateCurrentArrowIndex(-1);
       break;
-    case 32 || 49: // SPACEBAR
+    case RETURN || ENTER:
       // console.log("current note index: " + current_arrow_index);
       if (current_arrow_index == ARROW_PRESSES.length - 1) {
         console.log("no more notes after this one");

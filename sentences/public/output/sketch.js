@@ -161,7 +161,7 @@ class User {
     fill(255);
     textAlign(CENTER, CENTER);
     text(this.bat, 0, 0);
-    
+
     pop();
   }
 
@@ -179,10 +179,10 @@ function keyPressed() {
       if(!(2 in users)) users[2] = new User(2);
       users[2].strike();
       break;
-    case RIGHT_ARROW:
+    case RIGHT_ARROW || 33:
       w++;
       break;
-    case LEFT_ARROW:
+    case LEFT_ARROW || 34:
       w--;
       break;
   }
