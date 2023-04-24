@@ -126,13 +126,13 @@ function jump(to) {
   console.log("Jump to: ", to);
   if (current_arrow_index < to) {
     for (let c = current_arrow_index; c < to; c++) {
-        keyCode = 32;
+        keyCode = ENTER;
         keyPressed();
     }
   }
   else {
     for (let c = current_arrow_index; c > to; c--) {
-        keyCode = CONTROL;
+        keyCode = SHIFT;
         keyPressed();
     }
   }

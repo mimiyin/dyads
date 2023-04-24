@@ -26,18 +26,27 @@ let quanta = 2; // 2 or 8
 const PITCH_DELAY = 1000;
 const ANGLE_MIN = 30;
 const ANGLE_MAX = 180;
-const INTERVAL_MIN = 0.375
+const INTERVAL_MIN = 0.5
 const OFFSETS = {
   'board/1': 240,
   'board/2': 240,
   'control/1': 0,
   'control/2': 0
 };
+
+// Interval for Rhythmic Pitch
+const RHYTHMIC_PITCH_INTERVAL = {
+  1: 0.75,
+  2: 0.75
+}
+
 // Pitches for Rhythm
 const RATES = {
   'board/1': 0.83333,
   'board/2': 1
 };
+
+
 
 // Mode
 let mode = 1;
@@ -93,7 +102,7 @@ function setup() {
     let src = message.src;
     let t = message.t;
     let b = message.b;
-
+    
     // Nevermind if not on the right source
     if (source !== src) return;
 
@@ -103,7 +112,7 @@ function setup() {
   });
 
   // Listen for changes to offset
-  socket.on("offset", function(message){
+  socket.on("offset", function(message) {
     let _idx = message.idx;
     let off = message.off;
     let id = createId(_idx, 'board');
@@ -131,7 +140,7 @@ function draw() {
   textSize(16);
   fill(255);
   let st = start ? "(S)tarted" : "(S)topped";
-  let rec = record? "(R)ec" : "!(R)ec";
+  let rec = record ? "(R)ec" : "!(R)ec";
   text(st + '\t' + rec + '\t(X/C)Source: ' + source + '\t(V/B)ase: ' + base + '\tMode(123): ' + mode + '\tOnly rate: ' + onlySetRate + '\tOnly interval: ' + onlySetInterval, 10, 20);
 }
 
@@ -180,18 +189,18 @@ class User {
   }
 
   updateOffset(off) {
-    this.offset += off; 
- 
+    this.offset += off;
+
     // Wrap around
-    if(this.offset > 360) this.offset -= 360;
-    else if(this.offset < 0) this.offset = 360 + this.offset;
+    if (this.offset > 360) this.offset -= 360;
+    else if (this.offset < 0) this.offset = 360 + this.offset;
 
     console.log("New offset: ", this.idx, this.offset);
-   }
+  }
 
-   updateBat(bat) {
+  updateBat(bat) {
     this.bat = bat;
-   }
+  }
 
   // Need this to replay note when there's no change.
   resetOrientation() {
@@ -239,12 +248,12 @@ class User {
     this.o = o;
 
     //console.log("OFF", round(o), this.offset);
-       // Re-broadcast out orientation changes
+    // Re-broadcast out orientation changes
     if (this.src == "board") {
       socket.emit("orientation", {
         idx: this.idx,
         o: this.o,
-        off : this.offset
+        off: this.offset
       });
     }
 
@@ -384,9 +393,6 @@ class User {
     let bottom = max(qsize, INTERVAL_MIN);
     if (interval < bottom) interval = bottom;
 
-    // Special case for mode 2
-    if (mode == 2) interval = 1;
-
     //console.log("L Q I", l, q, interval);
     //console.log("INTERVAL", interval);
 
@@ -397,8 +403,11 @@ class User {
     //instead of 0.5 --> 0.25
     let cutoffChange = abs(qsize - INTERVAL_MIN);
     let minChange = min(qsize, cutoffChange);
+    // Special case for mode 2
+    if (mode == 2) interval = RHYTHMIC_PITCH_INTERVAL[this.idx];
+
     //console.log("MIN", minChange, abs(interval - this.interval));
-    if (abs(interval - this.interval) < minChange) return false;
+    else if (abs(interval - this.interval) < minChange) return false;
     //console.log("BASE, INTERVAL: ", l, base, interval);
 
     // Remember for next time
@@ -431,7 +440,7 @@ class User {
     translate(this.loc.x, this.loc.y);
     fill(this.src == 'board' ? "red" : "green");
     ellipse(0, 0, this.diam, this.diam);
-    if(this.src == 'board') {
+    if (this.src == 'board') {
       fill(255);
       textAlign(CENTER, CENTER);
       text(this.bat, 0, 0);
@@ -470,8 +479,14 @@ function keyPressed() {
     case 's':
       start = !start;
       socket.emit('start', start);
-      socket.emit('rate', { idx: 1, rate : 1 });
-      socket.emit('rate', { idx : 2, rate : 1 });
+      socket.emit('rate', {
+        idx: 1,
+        rate: 1
+      });
+      socket.emit('rate', {
+        idx: 2,
+        rate: 1
+      });
       break;
   }
 
@@ -494,6 +509,12 @@ function changeMode() {
     case '2':
       onlySetRate = 1;
       onlySetInterval = 0;
+      setTimeout(() => {
+        for (let u in users) {
+          let user = users[u];
+          user.updateTempo();
+        }
+      }, 500);
       break;
     case '3':
       onlySetRate = 0;
