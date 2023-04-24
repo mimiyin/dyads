@@ -155,7 +155,7 @@ class User {
 
     translate(this.loc.x, this.loc.y);
 
-    fill("red");
+    fill(this.go ? "red" : "green");
     ellipse(0, 0, this.diam, this.diam);
 
     fill(255);
@@ -179,10 +179,10 @@ function keyPressed() {
       if(!(2 in users)) users[2] = new User(2);
       users[2].strike();
       break;
-    case RIGHT_ARROW || 33:
+    case 33:
       w++;
       break;
-    case LEFT_ARROW || 34:
+    case 34:
       w--;
       break;
   }

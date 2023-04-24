@@ -28,7 +28,7 @@ const ANGLE_MIN = 30;
 const ANGLE_MAX = 180;
 const INTERVAL_MIN = 0.5
 const OFFSETS = {
-  'board/1': 240,
+  'board/1': 230,
   'board/2': 240,
   'control/1': 0,
   'control/2': 0
