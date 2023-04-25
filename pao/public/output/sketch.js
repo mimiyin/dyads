@@ -36,8 +36,8 @@ const OFFSETS = {
 
 // Interval for Rhythmic Pitch
 const RHYTHMIC_PITCH_INTERVAL = {
-  1: 0.75,
-  2: 0.75
+  1: 0.65,
+  2: 0.6
 }
 
 // Pitches for Rhythm

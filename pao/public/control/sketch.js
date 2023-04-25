@@ -168,8 +168,11 @@ function emit(event) {
 function keyPressed(e) {
 
   switch (key) {
-    case '2':
-      socket.emit('mode', key);
+    case "'":
+      socket.emit('mode', 2);
+      break;
+    case "/":
+      socket.emit('mode', 1);
       break;
     case 'a':
       off--;
