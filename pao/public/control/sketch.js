@@ -168,6 +168,9 @@ function emit(event) {
 function keyPressed(e) {
 
   switch (key) {
+    case '2':
+      socket.emit('mode', key);
+      break;
     case 'a':
       off--;
       socket.emit('offset', { idx : idx, off : -1 });

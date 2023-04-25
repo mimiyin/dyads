@@ -44,15 +44,12 @@ let tees = {};
 io.on('connection', function(socket) {
   console.log('A player or board client connected: ' + socket.id);
 
-  // Sync up mode
-  socket.emit('mode', mode);
-
   // Set board settings
   socket.emit('set_data_rate', data_rate);
   socket.emit('set_sample_rate', sample_rate);
 
-  // Tell inputs what data to send
-  update_mode();
+  // Sync up mode
+  update_mode(mode);
 
   // Listen for id
   socket.on('idx', function(message) {
@@ -117,10 +114,7 @@ controls.on('connection', function(socket) {
   console.log('A control client connected: ' + socket.id);
 
   // Sync up mode
-  socket.emit('mode', mode);
-
-  // Tell inputs what data to send
-  update_mode();
+  update_mode(mode);
 
   // Listen for id
   socket.on('idx', function(message) {
@@ -157,6 +151,11 @@ controls.on('connection', function(socket) {
     outputs.emit('offset', message);
   });
 
+  // Listen for changes to mode 2
+  socket.on('mode', function(data){
+    update_mode(data);
+  })
+
   // Listen for this output client to disconnect
   socket.on('disconnect', function() {
     console.log("A control client has disconnected " + socket.id);
@@ -177,7 +176,7 @@ outputs.on('connection', function(socket) {
   console.log('Mode', mode);
 
   // Sync up mode
-  socket.emit('mode', mode);
+  update_mode(mode);
 
   // Listen for orientation data
   socket.on('orientation', function(message){
@@ -207,14 +206,8 @@ outputs.on('connection', function(socket) {
   socket.on('mode', function(data) {
     console.log("Mode:", data);
 
-    // Store the mode
-    mode = data;
-
-    // Tell player and board clients about mode
-    io.emit('mode', mode);
-
     // Tell inputs what data to send
-    update_mode();
+    update_mode(data);
   });
 
   // Start recording
@@ -235,7 +228,18 @@ outputs.on('connection', function(socket) {
 });
 
 // Tell inputs what data to send
-function update_mode() {
+function update_mode(data) {
+
+  console.log("Changed mode: ", data);
+
+  // Store the mode
+  mode = data;
+
+  // Tell player and board clients about mode
+  io.emit('mode', mode);
+  // Tell output about mode
+  outputs.emit('mode', mode);
+
   let only_set_rate = 0;
   let only_set_interval = 0;
 
