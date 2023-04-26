@@ -26,7 +26,7 @@ let quanta = 2; // 2 or 8
 const PITCH_DELAY = 1000;
 const ANGLE_MIN = 30;
 const ANGLE_MAX = 180;
-const INTERVAL_MIN = 0.5
+const INTERVAL_MIN = 0.375
 const OFFSETS = {
   'board/1': 230,
   'board/2': 240,

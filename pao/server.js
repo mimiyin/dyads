@@ -74,8 +74,8 @@ io.on('connection', function(socket) {
     // Send battery data
     let b = message.bat || "NULL";
 
-    print_data('o', message.src, message.idx, ohs, message.o)
-    // print_data('t', message.src, message.idx, tees, message.t)
+    //print_data('o', message.src, message.idx, ohs, message.o)
+    print_data('t', message.src, message.idx, tees, message.t)
 
 
     // Send it to all of the output clients
@@ -196,7 +196,7 @@ outputs.on('connection', function(socket) {
   socket.on('interval', function(message) {
 
     // Data comes in as whatever was sent, including objects
-    console.log("Received interval: " + message.interval);
+    //console.log("Received interval: " + message.interval);
 
     // Send it to all of the player clients
     io.emit('interval', message);

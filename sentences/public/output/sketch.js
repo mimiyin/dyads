@@ -179,10 +179,10 @@ function keyPressed() {
       if(!(2 in users)) users[2] = new User(2);
       users[2].strike();
       break;
-    case 33:
+    case RIGHT_ARROW:
       w++;
       break;
-    case 34:
+    case LEFT_ARROW:
       w--;
       break;
   }
