@@ -7,19 +7,20 @@ class Note {
     this.pr = this.r;
     this.f = this.r * base * b;
     this.osc = new p5.Oscillator("sine", this.f);
-    this.osc.amp(0, 0);
+    this.osc.amp(0);
     this.osc.start();
+    this.amp = 0;
+    this.int = null;
     this.isActive = false;
   }
 
   isInside(x, y) {
-    console.log(this.x, this.y, x, y);
     return dist(this.x, this.y, x, y) < RAD;
   }
 
   isOriented(o) {
-    console.log(this.o, o);
-    return abs(this.o - o) < 1;
+    console.log(this.o-o);
+    return abs(this.o - o) < 0.1;
   }
 
   inPosition(x, y, o) {
@@ -29,23 +30,35 @@ class Note {
   play() {
     // create Oscillator node
     if(this.isActive) return;
-    this.osc.amp(1, 2);
+    console.log("PLAY!", this.f);
     this.isActive = true;
+    clearInterval(this.int);
+    this.int = setInterval(()=>{
+      this.osc.amp(this.amp);
+      if(this.amp < 1) this.amp+=0.01;
+      console.log("AMP", this.amp);
+    }, 10);
   }
 
   stop() {
+    if(!this.isActive) return;
     this.isActive = false;
-    this.osc.amp(0, 5);
+    console.log("STOP", this.f);
+    clearInterval(this.int);
+    this.int = setInterval(()=>{
+      this.osc.amp(this.amp);
+      if(this.amp > 0) this.amp-=0.01;
+    }, 10);
+    this.osc.amp(0);
   }
 
   display() {
     push();
     translate(this.x, this.y);
     fill(255);
-    ellipse(0, 0, RAD);
+    ellipse(0, 0, RAD*2);
     rotate(this.o);
-    line(0, 0, 10, 10);
-    ellipse(10, 10, 10);
+    line(0, 0, RAD, 0);
     pop();
 
   }
