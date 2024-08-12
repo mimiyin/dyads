@@ -1,6 +1,36 @@
+//
+// Set note positions of notes with mousedrag
+// When both people have occupied a position for a certain amount of time - click them to the next stage
+
+// Load and save spreadsheet of settings
+// Initial set of positions for each movers
+// Notes for each mover
+// Time delay for each pair of positions
+
+let cues = {
+  'A': [{
+    x: 100,
+    y: 100,
+    n: 'do',
+    t: 1000
+  }],
+  'B': [{
+    x: 300,
+    y: 100,
+    n: 'so',
+    t: 1000
+  }]
+}
+
+
 // Open and connect socket
 let socket = io();
 
+// 10 seconds in each location
+const DURATION = 10000;
+
+const MOVER = 0;
+const NOTE = 1;
 
 // Remembering where we are
 let o = 0;
@@ -35,7 +65,12 @@ let movers = {
 };
 
 // Locales
-let notes = [];
+let notes = {
+  'A': [],
+  'B': []
+};
+
+
 
 const RAD = 30;
 
@@ -51,8 +86,27 @@ function setup() {
   osc = new p5.Oscillator("sine", 440);
   osc.amp(0);
 
-  notes.push(new Note(width / 2, height / 2, PI / 2, 1));
-  //notes.push(new Note(random(width), random(height), PI/4, 1));
+  // Load all the cues
+  for (let m in cues) {
+    let moverCues = cues[m];
+    for (let cue of moverCues) {
+      let x = cue.x;
+      let y = cue.y;
+      let n = cue.n;
+      let t = cue.t;
+      let ratio = ratios[n];
+      let r = ratio.num / ratio.den;
+      let f = r * base;
+      let o = map(r, 1, 2, 0, TWO_PI) + PI / 2;
+
+      // Create new note
+      notes[m].push(new Note(m, x, y, o, f, t));
+    }
+  }
+
+
+
+
 
 
   // Listen for data coming from the server
@@ -87,7 +141,13 @@ function draw() {
   background(255);
 
   // Show the notes.
-  for (let note of notes) note.display();
+  for (let m in notes) {
+    let sequence = notes[m];
+    for (let n in sequence) {
+      let note = sequence[n];
+      note.display();
+    }
+  }
 
   // Draw all the tags
   for (let m in moverTagPairs) {
@@ -115,45 +175,88 @@ function draw() {
     }
   }
 
-
-  for (let m in movers) {
-    let mover = movers[m];
-    if (mover) {
-      mover.run();
-    }
-  }
+  // Is everyone ready to move on?
+  let ready = movers.values((mover) => mover.run());
+  // If everyone ready, move everyone ahead
+  if (ready) movers.values((mover) => {
+    mover.next()
+  })
 
 }
 
-let idx = 0;
 let osc;
-let active = false;
 
 function keyPressed() {
-  idx++;
-  idx %= 4;
 
-  // Test tags
-  calc(idx, {
-    x: mouseX,
-    y: mouseY,
-    ts: Date.now()
-  });
-
-  
+  switch (key) {
+    case 's':
+      osc.amp(0);
+      osc.start();
+      osc.amp(1);
+      break;
+    case 'm':
+      mode = MOVER;
+      break;
+    case 'n':
+      mode = NOTE;
+      break;
+  }
 }
 
 function mousePressed() {
-  if (active) return;
-  osc.amp(0);
-  osc.start();
-  osc.amp(1);
-  active = true;
+  switch (mode) {
+    case MOVER:
+      // Straight mouse testing
+      for (let m in movers) {
+        let mover = movers[m];
+        if (mover) mover.move();
+        else {
+          console.log("Create new mover: ", m);
+          movers[m] = new Mover(m, mouseX, mouseY, PI / 2);
+        }
+      }
+      break;
+    case NOTE:
+      // Straight mouse testing
+      for(let m in notes) {
+        for(let n in notes[m]) note[n].position(mouseX, mouseY);
+      }
+      break;
+  }
+
+  function mouseReleased() {
+    switch (mode) {
+      case MOVER:
+        // Straight mouse testing
+        for (let m in movers) {
+          let mover = movers[m];
+          if (mover) mover.release();
+        }
+        break;
+      case NOTE:
+        // Straight mouse testing
+        for(let m in notes) {
+          for(let n in notes[m]) note[n].release();
+        }
+        break;
+    }
+  }
+
+
+
+  // Test tags
+  // idx++;
+  // idx %= 4;
+  // Test tags
+  // calc(idx, {
+  //   x: mouseX,
+  //   y: mouseY,
+  //   ts: Date.now()
+  // });
 }
 
-function mouseReleased() {
-  //vol.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 5);
-  osc.amp(0, 2);
+function keyReleased() {
+  if (key == 's') osc.amp(0);
 
 
 }

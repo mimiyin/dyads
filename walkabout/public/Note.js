@@ -1,17 +1,18 @@
 class Note {
-  constructor(x, y, o, b) {
+  constructor(m, x, y, o, f, t) {
+    this.m = m;
     this.x = x;
     this.y = y;
     this.o = o;
-    this.r = this.mapRate(o);
-    this.pr = this.r;
-    this.f = this.r * base * b;
+    this.f = f;
     this.osc = new p5.Oscillator("sine", this.f);
     this.osc.amp(0);
     this.osc.start();
     this.amp = 0;
     this.int = null;
     this.isActive = false;
+    this.t = 0;
+    this.isPositioning = false;
   }
 
   isInside(x, y) {
@@ -25,6 +26,22 @@ class Note {
 
   inPosition(x, y, o) {
     return this.isInside(x, y) && this.isOriented(o);
+  }
+
+  position(x, y) {
+    if(d < RAD) this.positioning = true;
+    if(this.positioning) {
+      this.x = x;
+      this.y = y;
+    }
+  }
+
+  release() {
+    this.positioning = false;
+    let cue = cues[this.m][this.n];
+    cue.x = this.x;
+    cue.y = this.y;
+    saveJSON('cues', cues);
   }
 
   play() {
@@ -57,28 +74,13 @@ class Note {
     translate(this.x, this.y);
     fill(255);
     ellipse(0, 0, RAD*2);
+    textSize(14);
+    textAlign(CENTER, CENTER);
+    fill(0);
+    text(this.m, 0, 0);
     rotate(this.o);
     line(0, 0, RAD, 0);
     pop();
 
-  }
-
-  mapRate(o) {
-    // Map pitch
-    let r = map(o, 0, 360, 1, 2);
-
-    // Snap to closest diatonic note
-    let closest = 10;
-    let nr = r;
-    for (let ratio of ratios) {
-      let _r = ratio.num / ratio.den;
-      let dr = abs(r - _r);
-      if (dr < closest) {
-        nr = _r;
-        closest = dr;
-      }
-    }
-    // Snap to closest r
-    return nr;
   }
 }

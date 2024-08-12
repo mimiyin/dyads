@@ -2,31 +2,40 @@
 let base = 200;
 
 // Ratios for diatonic scale
-let ratios = [{
-  num: 1,
-  den: 1
-}, {
-  num: 9,
-  den: 8
-}, {
-  num: 5,
-  den: 4
-}, {
-  num: 4,
-  den: 3
-}, {
-  num: 3,
-  den: 2
-}, {
-  num: 5,
-  den: 3
-}, {
-  num: 15,
-  den: 8
-}, {
-  num: 2,
-  den: 1
-}, ]
+let ratios = {
+  'do': {
+    num: 1,
+    den: 1
+  },
+  're': {
+    num: 9,
+    den: 8
+  },
+  'mi': {
+    num: 5,
+    den: 4
+  },
+  'fa': {
+    num: 4,
+    den: 3
+  },
+  'so': {
+    num: 3,
+    den: 2
+  },
+  'la': {
+    num: 5,
+    den: 3
+  },
+  'ti': {
+    num: 15,
+    den: 8
+  },
+  'do2': {
+    num: 2,
+    den: 1
+  }
+}
 
 function calc(id, data) {
 
@@ -60,13 +69,13 @@ function calc(id, data) {
     let x = (left.x + right.x) / 2;
     let y = (left.y + right.y) / 2;
 
-    let o = createVector(ox, oy).heading() + PI/2;
+    let o = createVector(ox, oy).heading() + PI / 2;
 
     // Create new mover
     let mover = movers[m];
 
-    if(mover) mover.update(x, y, o, Date.now());
-    else mover = new Mover(x, y, o, Date.now());
+    if (mover) mover.update(x, y, o, Date.now());
+    else mover = new Mover(m, x, y, o, Date.now());
     movers[m] = mover;
   }
 
