@@ -12,7 +12,7 @@ let cues = {
     x: 100,
     y: 100,
     n: 'do',
-    t: 1000
+    t: 10000
   }],
   'B': [{
     x: 300,
@@ -63,7 +63,7 @@ let tags2MoversLookup = {
 // Track movers
 let movers = {
   'A': undefined,
-  //'B': undefined
+  'B': undefined
 };
 
 // Locales
@@ -95,14 +95,15 @@ function setup() {
   // Load all the cues
   for (let m in cues) {
     let moverCues = cues[m];
-    for (let cue of moverCues) {
+    for (let c in moverCues) {
+      let cue = moverCues[c];
       let x = cue.x;
       let y = cue.y;
       let n = cue.n;
       let t = cue.t;
 
       // Create new note
-      notes[m].push(new Note(m, x, y, n, t));
+      notes[m].push(new Note(c, m, x, y, n, t));
     }
   }
 
@@ -178,9 +179,10 @@ function draw() {
   try {
     // Is everyone ready to move on?
     let _movers = Object.values(movers);
+    // Run every mover
+    _movers.forEach((mover) => mover.run());
 
-    let ready = _movers.every((mover) => mover.run());
-    console.log(ready);
+    let ready = _movers.every((mover) => mover.ready());
     // If everyone ready, move everyone ahead
     if (ready) _movers.forEach((mover) => {
       mover.next()
@@ -202,7 +204,7 @@ function position() {
     case NOTE:
       // Straight mouse testing
       for (let m in notes) {
-        for (let n in notes[m]) note[n].position(mouseX, mouseY);
+        for (let note of notes[m]) note.position(mouseX, mouseY);
       }
       break;
   }
@@ -242,7 +244,7 @@ function mouseReleased() {
     case NOTE:
       // Straight mouse testing
       for (let m in notes) {
-        for (let n in notes[m]) note[n].release();
+        for (let note of notes[m]) note.release();
       }
       break;
   }

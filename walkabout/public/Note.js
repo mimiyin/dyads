@@ -1,5 +1,6 @@
 class Note {
-  constructor(m, x, y, n, t) {
+  constructor(idx, m, x, y, n, t) {
+    this.idx = idx;
     this.m = m;
     this.x = x;
     this.y = y;
@@ -12,7 +13,7 @@ class Note {
     this.amp = 0;
     this.ease = null;
     this.isActive = false;
-    this.t = 0;
+    this.t = t;
     this.isPositioning = false;
   }
 
@@ -21,7 +22,6 @@ class Note {
   }
 
   isOriented(o) {
-    console.log(this.o-o);
     return abs(this.o - o) < 0.1;
   }
 
@@ -42,7 +42,7 @@ class Note {
     this.positioning = false;
 
     // Save new x,y position of note
-    let cue = cues[this.m][this.n];
+    let cue = cues[this.m][this.idx];
     cue.x = this.x;
     cue.y = this.y;
     saveJSON('cues', 'cues-' + Date.now() + '.json');
@@ -57,7 +57,8 @@ class Note {
     this.ease = setInterval(()=>{
       this.osc.amp(this.amp);
       if(this.amp < 1) this.amp+=0.01;
-      console.log("AMP", this.amp);
+      else clearInterval(this.ease);
+      //console.log("AMP", this.amp);
     }, 10);
   }
 
@@ -69,6 +70,7 @@ class Note {
     this.ease = setInterval(()=>{
       this.osc.amp(this.amp);
       if(this.amp > 0) this.amp-=0.01;
+      else clearInterval(this.ease);
     }, 10);
     this.osc.amp(0);
   }

@@ -9,8 +9,10 @@ class Mover {
     this.ox;
     this.oy;
 
+    // Populate position values
     this.update(x, y, o);
 
+    // Track manual updates
     this.positioning = false;
     this.orienting = false;
 
@@ -45,8 +47,16 @@ class Mover {
     this.oy = RAD * sin(this.o) + this.y;
   }
 
+  ready() {
+    // If note is done
+    return this.timer > this.note.t;
+  }
+
   next() {
+    // Move to next note
     this.n++;
+
+    // Assign note if started
     if(this.n >= this.notes.length) this.standby = true;
     else this.note = this.notes[this.n];
 
@@ -62,7 +72,12 @@ class Mover {
   play() {
     let f = orientationToFrequency(this.o);
     this.osc.freq(f);
-    console.log("On standby!", this.o);
+  }
+
+  stop(){
+    this.osc.amp(0);
+    this.osc.stop();
+    this.standby = false;
   }
 
   run() {
@@ -72,10 +87,14 @@ class Mover {
     // Reflect movement freely at the beginning
     if(this.standby) {
       this.play();
-      if (this.note.inPosition(this.x, this.y, this.o)) this.standby = false;
+      if (this.note.inPosition(this.x, this.y, this.o)) {
+        console.log("Let's start!");
+        this.stop();
+      }
     }
     else {
       if (this.note.inPosition(this.x, this.y, this.o)) {
+        console.log("In position!");
         this.note.play();
         this.timer++;
         this.standby = false;
@@ -85,9 +104,6 @@ class Mover {
         this.timer = 0;
       }
     }
-
-    // If note is done
-    return this.timer > this.note.t;
   }
 
   display() {
@@ -114,10 +130,7 @@ class Mover {
 
   position(x, y) {
     if (dist(this.x, this.y, x, y) < 5) this.positioning = true;
-    if (this.positioning) {
-      console.log("Positioning", this.m);
-      this.update(x, y, this.o, Date.now());
-    }
+    if (this.positioning) this.update(x, y, this.o, Date.now());
   }
 
   orient(x, y) {
