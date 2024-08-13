@@ -1,8 +1,8 @@
 // Base frequency
-let base = 200;
+const BASE = 200;
 
 // Ratios for diatonic scale
-let ratios = {
+const RATIOS = {
   'do': {
     num: 1,
     den: 1
@@ -74,10 +74,49 @@ function calc(id, data) {
     // Create new mover
     let mover = movers[m];
 
-    if (mover) mover.update(x, y, o, Date.now());
-    else mover = new Mover(m, x, y, o, Date.now());
+    if (mover) mover.update(x, y, o, Date.now())
+    else new Mover(m, x, y, o, Date.now());
+
     movers[m] = mover;
   }
+}
 
+function noteToRate(n) {
+  let ratio = RATIOS[n];
+  return ( ratio.num/ratio.den );
+}
 
+function noteToFrequency(n) {
+  let r = noteToRate(n);
+  return r * BASE;
+}
+
+function noteToOrientation(n) {
+  let r = noteToRate(n);
+  return map(r, 1, 2, 0, TWO_PI);
+}
+
+function orientationToRate(o) {
+  // Map pitch
+  let r = map(o, 0, 360, 1, 2);
+
+  // Snap to closest diatonic note
+  let closest = 10;
+  let nr = r;
+  for (let r in RATIOS) {
+    let ratio = RATIOS[r];
+    let _r = ratio.num / ratio.den;
+    let dr = abs(r - _r);
+    if (dr < closest) {
+      nr = _r;
+      closest = dr;
+    }
+  }
+  // Snap to closest r
+  return nr;
+}
+
+function orientationToFrequency(o){
+  let r = orientationToRate(o);
+  return  r* BASE;
 }

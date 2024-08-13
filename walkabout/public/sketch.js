@@ -29,6 +29,8 @@ let socket = io();
 // 10 seconds in each location
 const DURATION = 10000;
 
+// Set the mode
+let mode = 0;
 const MOVER = 0;
 const NOTE = 1;
 
@@ -70,9 +72,13 @@ let notes = {
   'B': []
 };
 
+// Test sound
+let osc;
 
-
+// Size of note area
 const RAD = 30;
+
+
 
 // Listen for when the socket connects
 socket.on('connect', function() {
@@ -94,19 +100,11 @@ function setup() {
       let y = cue.y;
       let n = cue.n;
       let t = cue.t;
-      let ratio = ratios[n];
-      let r = ratio.num / ratio.den;
-      let f = r * base;
-      let o = map(r, 1, 2, 0, TWO_PI) + PI / 2;
 
       // Create new note
-      notes[m].push(new Note(m, x, y, o, f, t));
+      notes[m].push(new Note(m, x, y, n, t));
     }
   }
-
-
-
-
 
 
   // Listen for data coming from the server
@@ -122,13 +120,11 @@ function setup() {
       if (data.coordinates) {
         let x = data.coordinates.x / 10;
         let y = data.coordinates.y / 10;
-
-        //console.log(id, x, y);
-        tags[id] = {
-          x: x,
-          y: y,
-          ts: ts
-        };
+        calc(id, {
+          x: mouseX,
+          y: mouseY,
+          ts: Date.now()
+        });
       }
     }
   });
@@ -175,16 +171,24 @@ function draw() {
     }
   }
 
-  // Is everyone ready to move on?
-  let ready = movers.values((mover) => mover.run());
-  // If everyone ready, move everyone ahead
-  if (ready) movers.values((mover) => {
-    mover.next()
-  })
+  if(mouseIsPressed) {
+    position();
+  }
 
+  try {
+    // Is everyone ready to move on?
+    let _movers = Object.values(movers);
+
+    let ready = _movers.every((mover) => mover.run());
+    console.log(ready);
+    // If everyone ready, move everyone ahead
+    if (ready) _movers.forEach((mover) => {
+      mover.next()
+    })
+  } catch (e) {
+    console.log("No movers yet!", e);
+  }
 }
-
-let osc;
 
 function keyPressed() {
 
@@ -203,60 +207,60 @@ function keyPressed() {
   }
 }
 
-function mousePressed() {
+function position() {
   switch (mode) {
     case MOVER:
       // Straight mouse testing
       for (let m in movers) {
         let mover = movers[m];
-        if (mover) mover.move();
+        if (mover) mover.move(mouseX, mouseY);
+      }
+      break;
+    case NOTE:
+      // Straight mouse testing
+      for (let m in notes) {
+        for (let n in notes[m]) note[n].position(mouseX, mouseY);
+      }
+      break;
+  }
+}
+
+function mouseReleased() {
+
+  switch (mode) {
+    case MOVER:
+      // Straight mouse testing
+      for (let m in movers) {
+        let mover = movers[m];
+        if (mover) mover.release();
         else {
-          console.log("Create new mover: ", m);
-          movers[m] = new Mover(m, mouseX, mouseY, PI / 2);
+          movers[m] = new Mover(m, mouseX, mouseY, PI / 2, Date.now());
+          break;
         }
       }
       break;
     case NOTE:
       // Straight mouse testing
-      for(let m in notes) {
-        for(let n in notes[m]) note[n].position(mouseX, mouseY);
+      for (let m in notes) {
+        for (let n in notes[m]) note[n].release();
       }
       break;
   }
-
-  function mouseReleased() {
-    switch (mode) {
-      case MOVER:
-        // Straight mouse testing
-        for (let m in movers) {
-          let mover = movers[m];
-          if (mover) mover.release();
-        }
-        break;
-      case NOTE:
-        // Straight mouse testing
-        for(let m in notes) {
-          for(let n in notes[m]) note[n].release();
-        }
-        break;
-    }
-  }
-
-
-
-  // Test tags
-  // idx++;
-  // idx %= 4;
-  // Test tags
-  // calc(idx, {
-  //   x: mouseX,
-  //   y: mouseY,
-  //   ts: Date.now()
-  // });
 }
+
+
+
+// Test tags
+// idx++;
+// idx %= 4;
+// Test tags
+// calc(idx, {
+//   x: mouseX,
+//   y: mouseY,
+//   ts: Date.now()
+// });
+
 
 function keyReleased() {
   if (key == 's') osc.amp(0);
-
-
 }

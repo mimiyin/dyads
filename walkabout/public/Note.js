@@ -1,15 +1,16 @@
 class Note {
-  constructor(m, x, y, o, f, t) {
+  constructor(m, x, y, n, t) {
     this.m = m;
     this.x = x;
     this.y = y;
-    this.o = o;
-    this.f = f;
+    this.n = n;
+    this.o = noteToOrientation(this.n);
+    this.f = noteToFrequency(this.n);
     this.osc = new p5.Oscillator("sine", this.f);
     this.osc.amp(0);
     this.osc.start();
     this.amp = 0;
-    this.int = null;
+    this.ease = null;
     this.isActive = false;
     this.t = 0;
     this.isPositioning = false;
@@ -29,6 +30,7 @@ class Note {
   }
 
   position(x, y) {
+    let d = dist(this.x, this.y, x, y);
     if(d < RAD) this.positioning = true;
     if(this.positioning) {
       this.x = x;
@@ -38,10 +40,12 @@ class Note {
 
   release() {
     this.positioning = false;
+
+    // Save new x,y position of note
     let cue = cues[this.m][this.n];
     cue.x = this.x;
     cue.y = this.y;
-    saveJSON('cues', cues);
+    saveJSON('cues', 'cues-' + Date.now() + '.json');
   }
 
   play() {
@@ -49,8 +53,8 @@ class Note {
     if(this.isActive) return;
     console.log("PLAY!", this.f);
     this.isActive = true;
-    clearInterval(this.int);
-    this.int = setInterval(()=>{
+    clearInterval(this.ease);
+    this.ease = setInterval(()=>{
       this.osc.amp(this.amp);
       if(this.amp < 1) this.amp+=0.01;
       console.log("AMP", this.amp);
@@ -61,8 +65,8 @@ class Note {
     if(!this.isActive) return;
     this.isActive = false;
     console.log("STOP", this.f);
-    clearInterval(this.int);
-    this.int = setInterval(()=>{
+    clearInterval(this.ease);
+    this.ease = setInterval(()=>{
       this.osc.amp(this.amp);
       if(this.amp > 0) this.amp-=0.01;
     }, 10);
@@ -77,7 +81,7 @@ class Note {
     textSize(14);
     textAlign(CENTER, CENTER);
     fill(0);
-    text(this.m, 0, 0);
+    text(this.m + ': ' + this.n, 0, -RAD);
     rotate(this.o);
     line(0, 0, RAD, 0);
     pop();
