@@ -62,6 +62,7 @@ class Mover {
   play() {
     let f = orientationToFrequency(this.o);
     this.osc.freq(f);
+    console.log("On standby!", this.o);
   }
 
   run() {

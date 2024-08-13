@@ -98,13 +98,13 @@ function noteToOrientation(n) {
 
 function orientationToRate(o) {
   // Map pitch
-  let r = map(o, 0, 360, 1, 2);
+  let r = map(o, -PI, PI, 1, 2);
 
   // Snap to closest diatonic note
   let closest = 10;
   let nr = r;
-  for (let r in RATIOS) {
-    let ratio = RATIOS[r];
+  for (let n in RATIOS) {
+    let ratio = RATIOS[n];
     let _r = ratio.num / ratio.den;
     let dr = abs(r - _r);
     if (dr < closest) {
@@ -118,5 +118,6 @@ function orientationToRate(o) {
 
 function orientationToFrequency(o){
   let r = orientationToRate(o);
-  return  r* BASE;
+  console.log("Nearest rate: " + r);
+  return  r * BASE;
 }

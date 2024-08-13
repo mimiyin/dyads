@@ -63,7 +63,7 @@ let tags2MoversLookup = {
 // Track movers
 let movers = {
   'A': undefined,
-  'B': undefined
+  //'B': undefined
 };
 
 // Locales
@@ -190,23 +190,6 @@ function draw() {
   }
 }
 
-function keyPressed() {
-
-  switch (key) {
-    case 's':
-      osc.amp(0);
-      osc.start();
-      osc.amp(1);
-      break;
-    case 'm':
-      mode = MOVER;
-      break;
-    case 'n':
-      mode = NOTE;
-      break;
-  }
-}
-
 function position() {
   switch (mode) {
     case MOVER:
@@ -221,6 +204,23 @@ function position() {
       for (let m in notes) {
         for (let n in notes[m]) note[n].position(mouseX, mouseY);
       }
+      break;
+  }
+}
+
+function keyPressed() {
+
+  switch (key) {
+    case 's':
+      osc.amp(0);
+      osc.start();
+      osc.amp(1);
+      break;
+    case 'm':
+      mode = MOVER;
+      break;
+    case 'n':
+      mode = NOTE;
       break;
   }
 }
