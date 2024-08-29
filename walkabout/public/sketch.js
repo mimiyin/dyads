@@ -7,20 +7,17 @@
 // Notes for each mover
 // Time delay for each pair of positions
 
-let cues = {
-  'A': [{
+let cues = [{
     x: 100,
     y: 100,
-    n: 'so',
-    t: 10000
-  }],
-  'B': [{
+    n: 'do'
+  },
+  {
     x: 300,
     y: 100,
-    n: 'so',
-    t: 1000
-  }]
-}
+    n: 'so'
+  }
+]
 
 
 // Open and connect socket
@@ -30,7 +27,7 @@ let socket = io();
 const DURATION = 10000;
 
 // Set the mode
-let mode = 1;
+let mode = 0;
 const MOVER = 0;
 const NOTE = 1;
 
@@ -67,10 +64,7 @@ let movers = {
 };
 
 // Locales
-let notes = {
-  'A': [],
-  'B': []
-};
+let notes = [];
 
 // Test sound
 let osc;
@@ -93,19 +87,16 @@ function setup() {
   osc.amp(0);
 
   // Load all the cues
-  for (let m in cues) {
-    let moverCues = cues[m];
-    for (let c in moverCues) {
-      let cue = moverCues[c];
-      let x = cue.x;
-      let y = cue.y;
-      let n = cue.n;
-      let t = cue.t;
+  for (let c in cues) {
+    let cue = cues[c];
+    let x = cue.x;
+    let y = cue.y;
+    let n = cue.n;
 
-      // Create new note
-      notes[m].push(new Note(c, m, x, y, n, t));
-    }
+    // Create new note
+    notes.push(new Note(c, x, y, n));
   }
+
 
 
   // Listen for data coming from the server
@@ -138,12 +129,8 @@ function draw() {
   background(255);
 
   // Show the notes.
-  for (let m in notes) {
-    let sequence = notes[m];
-    for (let n in sequence) {
-      let note = sequence[n];
-      note.display();
-    }
+  for (let note of notes) {
+    note.display();
   }
 
   // Draw all the tags
@@ -172,7 +159,7 @@ function draw() {
     }
   }
 
-  if(mouseIsPressed) {
+  if (mouseIsPressed) {
     position();
   }
 
@@ -219,16 +206,18 @@ function keyPressed() {
       osc.start();
       osc.amp(1);
 
-      if(movers['A']) {
+      if (movers['A']) {
         movers['A'].osc.start();
         movers['A'].osc.amp(10);
       }
       break;
     case 'm':
       mode = MOVER;
+      console.log("Mode: Mover");
       break;
     case 'n':
       mode = NOTE;
+      console.log("Mode: Note");
       break;
   }
 }
@@ -248,26 +237,12 @@ function mouseReleased() {
       }
       break;
     case NOTE:
-      // Straight mouse testing
-      for (let m in notes) {
-        for (let note of notes[m]) note.release();
+      for (let note of notes) {
+        if (note.isInside(mouseX, mouseY)) note.release();
       }
       break;
   }
 }
-
-
-
-// Test tags
-// idx++;
-// idx %= 4;
-// Test tags
-// calc(idx, {
-//   x: mouseX,
-//   y: mouseY,
-//   ts: Date.now()
-// });
-
 
 function keyReleased() {
   if (key == 's') osc.amp(0);

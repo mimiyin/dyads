@@ -48,7 +48,7 @@ client.on("message", (topic, message) => {
   io.emit("pozyx", data);
   }
   catch(e) {
-    console.log('Whoops');
+    console.log('Whoops, no data.');
   }
   //client.end();
 });

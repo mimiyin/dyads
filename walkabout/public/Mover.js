@@ -17,9 +17,7 @@ class Mover {
     this.orienting = false;
 
     // Assign note
-    this.n = -1;
-    this.notes = notes[this.m];
-    this.note = null;
+    this.note = notes[0];
 
     // Assign click
     this.click = loadSound('click.wav', ()=> {
@@ -53,12 +51,6 @@ class Mover {
   }
 
   next() {
-    // Move to next note
-    this.n++;
-
-    // Assign note if started
-    if(this.n >= this.notes.length) this.standby = true;
-    else this.note = this.notes[this.n];
 
     //Play the click sound
     this.click.play();
@@ -91,14 +83,18 @@ class Mover {
       if(this.note.isInside(this.x, this.y)) this.stop();
     }
     else {
-      if (this.note.inPosition(this.x, this.y, this.o)) {
-        console.log("In position!");
-        this.note.play();
-        this.timer++;
-      }
-      else {
-        this.note.stop();
-        this.timer = 0;
+      for(let note of notes) {
+        if(note.inPosition(this.x, this.y, this.o)) {
+          console.log("In position!");
+          this.note = note;
+          this.note.play();
+          this.timer++;
+          break;
+        }
+        else {
+          note.stop();
+          this.timer = 0;
+        }
       }
     }
   }

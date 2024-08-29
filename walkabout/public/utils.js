@@ -81,18 +81,20 @@ function calc(id, data) {
   }
 }
 
+function noteToRatio(n) {
+  return RATIOS[n];
+}
+
 function noteToRate(n) {
   let ratio = RATIOS[n];
   return ( ratio.num/ratio.den );
 }
 
-function noteToFrequency(n) {
-  let r = noteToRate(n);
+function rateToFrequency(r) {
   return r * BASE;
 }
 
-function noteToOrientation(n) {
-  let r = noteToRate(n);
+function rateToOrientation(r) {
   if(r < 1.25) return map(r, 1, 1.25, PI/2, PI)
   else if(r < 1.5) return map(r, 1.25, 1.5, -PI, -PI/2)
   else if(r < 1.75) return map(r, 1.5, 1.75, -PI/2, 0)

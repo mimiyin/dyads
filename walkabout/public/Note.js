@@ -1,19 +1,18 @@
 class Note {
-  constructor(idx, m, x, y, n, t) {
+  constructor(idx, x, y, n, ) {
     this.idx = idx;
-    this.m = m;
     this.x = x;
     this.y = y;
     this.n = n;
-    this.o = noteToOrientation(this.n);
-    this.f = noteToFrequency(this.n);
+    this.r = noteToRate(this.n);
+    this.o = rateToOrientation(this.r);
+    this.f = rateToFrequency(this.r);
     this.osc = new p5.Oscillator("sine", this.f);
     this.osc.amp(0);
     this.osc.start();
     this.amp = 0;
     this.ease = null;
     this.isActive = false;
-    this.t = t;
     this.isPositioning = false;
   }
 
@@ -21,12 +20,13 @@ class Note {
     return dist(this.x, this.y, x, y) < RAD;
   }
 
-  isOriented(o) {
-    return abs(this.o - o) < 0.2;
+  _isOriented(r) {
+    return this.r == r;
   }
 
   inPosition(x, y, o) {
-    return this.isInside(x, y) && this.isOriented(o);
+    let r = orientationToRate(o);
+    return this.isInside(x, y) && this._isOriented(r);
   }
 
   position(x, y) {
@@ -42,10 +42,10 @@ class Note {
     this.positioning = false;
 
     // Save new x,y position of note
-    let cue = cues[this.m][this.idx];
+    let cue = cues[this.idx];
     cue.x = this.x;
     cue.y = this.y;
-    saveJSON('cues', 'cues-' + Date.now() + '.json');
+    saveJSON(cues, 'cues-' + Date.now() + '.json');
   }
 
   play() {
@@ -53,8 +53,6 @@ class Note {
     if(this.isActive) return;
     console.log("PLAY!", this.f);
     this.isActive = true;
-    this.osc.amp(1);
-    return;
     clearInterval(this.ease);
     this.ease = setInterval(()=>{
       this.osc.amp(this.amp);
@@ -68,8 +66,6 @@ class Note {
     if(!this.isActive) return;
     this.isActive = false;
     console.log("STOP", this.f);
-    this.osc.amp(0);
-    return;
     clearInterval(this.ease);
     this.ease = setInterval(()=>{
       this.osc.amp(this.amp);
@@ -87,7 +83,7 @@ class Note {
     textSize(14);
     textAlign(CENTER, CENTER);
     fill(0);
-    text(this.m + ': ' + this.n, 0, -RAD);
+    text(this.idx + ': ' + this.n, 0, -RAD * 1.5);
     rotate(this.o);
     line(0, 0, RAD, 0);
     pop();
