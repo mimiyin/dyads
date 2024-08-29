@@ -32,8 +32,8 @@ class Mover {
 
     // Temp oscillator for pre-start
     this.osc = new p5.Oscillator("sine", 0);
-    this.osc.amp(1);
-    this.osc.start();
+    //this.osc.amp(1);
+    //this.osc.start();
 
     // Track standby status
     this.standby = true;
@@ -87,17 +87,14 @@ class Mover {
     // Reflect movement freely at the beginning
     if(this.standby) {
       this.play();
-      if (this.note.inPosition(this.x, this.y, this.o)) {
-        console.log("Let's start!");
-        this.stop();
-      }
+      console.log("On standby!");
+      if(this.note.isInside(this.x, this.y)) this.stop();
     }
     else {
       if (this.note.inPosition(this.x, this.y, this.o)) {
         console.log("In position!");
         this.note.play();
         this.timer++;
-        this.standby = false;
       }
       else {
         this.note.stop();

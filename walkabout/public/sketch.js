@@ -11,7 +11,7 @@ let cues = {
   'A': [{
     x: 100,
     y: 100,
-    n: 'do',
+    n: 'so',
     t: 10000
   }],
   'B': [{
@@ -30,7 +30,7 @@ let socket = io();
 const DURATION = 10000;
 
 // Set the mode
-let mode = 0;
+let mode = 1;
 const MOVER = 0;
 const NOTE = 1;
 
@@ -44,8 +44,8 @@ let prate = 1;
 
 let moverTagPairs = {
   'A': {
-    0: null,
-    1: null
+    10002038: null,
+    10002092: null
   },
   'B': {
     2: null,
@@ -54,8 +54,8 @@ let moverTagPairs = {
 }
 
 let tags2MoversLookup = {
-  0: 'A',
-  1: 'A',
+  10002038: 'A',
+  10002092: 'A',
   2: 'B',
   3: 'B'
 }
@@ -119,12 +119,12 @@ function setup() {
     let ts = tag.ts;
     if (data) {
       if (data.coordinates) {
-        let x = data.coordinates.x / 10;
-        let y = data.coordinates.y / 10;
+        let x = data.coordinates.x / 20;
+        let y = data.coordinates.y / 20;
         calc(id, {
-          x: mouseX,
-          y: mouseY,
-          ts: Date.now()
+          x: x,
+          y: y,
+          ts: ts
         });
       }
     }
@@ -176,19 +176,20 @@ function draw() {
     position();
   }
 
+
   try {
     // Is everyone ready to move on?
     let _movers = Object.values(movers);
     // Run every mover
     _movers.forEach((mover) => mover.run());
 
-    let ready = _movers.every((mover) => mover.ready());
-    // If everyone ready, move everyone ahead
-    if (ready) _movers.forEach((mover) => {
-      mover.next()
-    })
+    // let ready = _movers.every((mover) => mover.ready());
+    // // If everyone ready, move everyone ahead
+    // if (ready) _movers.forEach((mover) => {
+    //   mover.next()
+    // })
   } catch (e) {
-    console.log("No movers yet!", e);
+    //console.log("No movers yet!", e);
   }
 }
 
@@ -217,6 +218,11 @@ function keyPressed() {
       osc.amp(0);
       osc.start();
       osc.amp(1);
+
+      if(movers['A']) {
+        movers['A'].osc.start();
+        movers['A'].osc.amp(10);
+      }
       break;
     case 'm':
       mode = MOVER;

@@ -28,18 +28,27 @@ let server = require('http').createServer(app).listen(PORT, function() {
 let io = require('socket.io')(server);
 
 const mqtt = require("mqtt");
-const client = mqtt.connect("mqtt://0.0.0.0:8000");
+const client = mqtt.connect("mqtt://10.0.0.254:1883");
 
 client.on("connect", () => {
-  client.subscribe("presence", (err) => {
+  client.subscribe("tags", (err) => {
     if (!err) {
-      client.publish("presence", "Hello mqtt");
+      client.publish("tags", "Hello mqtt");
     }
   });
 });
 
+
 client.on("message", (topic, message) => {
   // message is Buffer
-  console.log(message.toString());
-  client.end();
+
+  try {
+  let data = JSON.parse(message.toString());
+  //console.log(topic, data);
+  io.emit("pozyx", data);
+  }
+  catch(e) {
+    console.log('Whoops');
+  }
+  //client.end();
 });

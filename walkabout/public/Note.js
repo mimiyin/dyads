@@ -22,7 +22,7 @@ class Note {
   }
 
   isOriented(o) {
-    return abs(this.o - o) < 0.1;
+    return abs(this.o - o) < 0.2;
   }
 
   inPosition(x, y, o) {
@@ -53,6 +53,8 @@ class Note {
     if(this.isActive) return;
     console.log("PLAY!", this.f);
     this.isActive = true;
+    this.osc.amp(1);
+    return;
     clearInterval(this.ease);
     this.ease = setInterval(()=>{
       this.osc.amp(this.amp);
@@ -66,6 +68,8 @@ class Note {
     if(!this.isActive) return;
     this.isActive = false;
     console.log("STOP", this.f);
+    this.osc.amp(0);
+    return;
     clearInterval(this.ease);
     this.ease = setInterval(()=>{
       this.osc.amp(this.amp);

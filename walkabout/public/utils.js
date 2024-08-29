@@ -75,7 +75,7 @@ function calc(id, data) {
     let mover = movers[m];
 
     if (mover) mover.update(x, y, o, Date.now())
-    else new Mover(m, x, y, o, Date.now());
+    else mover = new Mover(m, x, y, o, Date.now());
 
     movers[m] = mover;
   }
