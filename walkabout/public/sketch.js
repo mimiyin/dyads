@@ -16,6 +16,26 @@ let cues = [{
     x: 300,
     y: 100,
     n: 'so'
+  },
+  {
+    x: 300,
+    y: 400,
+    n: 'so'
+  },
+  {
+    x: 300,
+    y: 500,
+    n: 'so'
+  },
+  {
+    x: 300,
+    y: 700,
+    n: 'so'
+  },
+  {
+    x: 500,
+    y: 400,
+    n: 'so'
   }
 ]
 
@@ -27,7 +47,7 @@ let socket = io();
 const DURATION = 10000;
 
 // Set the mode
-let mode = 0;
+let mode = 1;
 const MOVER = 0;
 const NOTE = 1;
 
@@ -45,16 +65,16 @@ let moverTagPairs = {
     10002092: null
   },
   'B': {
-    2: null,
-    3: null
+    10002041: null,
+    10002032: null
   }
 }
 
 let tags2MoversLookup = {
   10002038: 'A',
   10002092: 'A',
-  2: 'B',
-  3: 'B'
+  10002041: 'B',
+  10002032: 'B'
 }
 
 // Track movers
@@ -80,6 +100,10 @@ socket.on('connect', function() {
   console.log("HEY I'VE CONNECTED");
 });
 
+function preload() {
+  cues = loadJSON('cues.json');
+}
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
@@ -101,6 +125,7 @@ function setup() {
 
   // Listen for data coming from the server
   socket.on('pozyx', function(message) {
+    //return;
     // Log the data
     //console.log('Received message: ', message);
     // Draw a circle at the y-position of the other user
@@ -110,8 +135,8 @@ function setup() {
     let ts = tag.ts;
     if (data) {
       if (data.coordinates) {
-        let x = data.coordinates.x / 20;
-        let y = data.coordinates.y / 20;
+        let x = data.coordinates.x / 10;
+        let y = (data.coordinates.y / 10 ) + 200;
         calc(id, {
           x: x,
           y: y,
@@ -191,9 +216,8 @@ function position() {
       break;
     case NOTE:
       // Straight mouse testing
-      for (let m in notes) {
-        for (let note of notes[m]) note.position(mouseX, mouseY);
-      }
+      for (let note of notes) note.position(mouseX, mouseY);
+      
       break;
   }
 }
@@ -206,10 +230,22 @@ function keyPressed() {
       osc.start();
       osc.amp(1);
 
-      if (movers['A']) {
-        movers['A'].osc.start();
-        movers['A'].osc.amp(10);
+      try {
+        for(let m in movers){
+          let mover = movers[m];
+          mover.osc.start();
+          mover.osc.amp(1);
+          mover.click.play();
+        }
+
+        for(let note of notes) {
+          note.osc.start();
+          note.osc.amp(1);
+        }
+      } catch(e) {
+        console.log('No movers yet!');
       }
+
       break;
     case 'm':
       mode = MOVER;
@@ -219,23 +255,20 @@ function keyPressed() {
       mode = NOTE;
       console.log("Mode: Note");
       break;
+    case 'w':
+      saveJSON(cues, 'cues-' + Date.now() + '.json');
+      break;
   }
 }
 
 function mouseReleased() {
 
   switch (mode) {
-    case MOVER:
-      // Straight mouse testing
+    case MOVER: 
       for (let m in movers) {
         let mover = movers[m];
         if (mover) mover.release();
-        else {
-          movers[m] = new Mover(m, mouseX, mouseY, PI / 2, Date.now());
-          break;
-        }
       }
-      break;
     case NOTE:
       for (let note of notes) {
         if (note.isInside(mouseX, mouseY)) note.release();
@@ -246,4 +279,17 @@ function mouseReleased() {
 
 function keyReleased() {
   if (key == 's') osc.amp(0);
+
+  for(let note of notes) {
+    //note.osc.start();
+    //note.osc.amp(1);
+  }
+
+  switch (mode) {
+    case MOVER:
+      for(let m in movers) {
+        if(m == key.toUpperCase()) movers[m] = new Mover(m, mouseX, mouseY, PI / 2, Date.now());
+      }
+      break;
+  }
 }

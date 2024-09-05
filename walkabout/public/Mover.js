@@ -20,13 +20,7 @@ class Mover {
     this.note = notes[0];
 
     // Assign click
-    this.click = loadSound('click.wav', ()=> {
-      this.next();
-      console.log(this.click);
-    });
-
-    // Track status
-    this.timer = 0;
+    this.click = loadSound('click.wav');
 
     // Temp oscillator for pre-start
     this.osc = new p5.Oscillator("sine", 0);
@@ -35,6 +29,10 @@ class Mover {
 
     // Track standby status
     this.standby = true;
+
+    // Track tempo
+    this.tempo = 10000;
+    this._tempo = 10000;
   }
 
   update(x, y, o, ts) {
@@ -50,53 +48,76 @@ class Mover {
     return this.timer > this.note.t;
   }
 
-  next() {
-
-    //Play the click sound
-    this.click.play();
-
-    // Print status
-    console.log("Next note: ", this.note);
-
-  }
-
   // Play frequency feedback when in standby mode
   play() {
     let f = orientationToFrequency(this.o);
     this.osc.freq(f);
   }
 
-  stop(){
+  stop() {
     this.osc.amp(0);
     this.osc.stop();
     this.standby = false;
   }
 
   run() {
+
     // Draw the mover
     this.display();
 
     // Reflect movement freely at the beginning
-    if(this.standby) {
+    if (this.standby) {
       this.play();
-      console.log("On standby!");
-      if(this.note.isInside(this.x, this.y)) this.stop();
+      console.log(this.m, " is on standby!");
+      if (this.note.isInside(this.x, this.y)) this.stop();
     }
     else {
-      for(let note of notes) {
-        if(note.inPosition(this.x, this.y, this.o)) {
-          console.log("In position!");
+      let outside = true;
+      for (let note of notes) {
+        if (note.inPosition(this.x, this.y, this.o)) {
+          this.lock();
           this.note = note;
-          this.note.play();
-          this.timer++;
+          this.note.play(m);
+          outside = false;
           break;
         }
-        else {
-          note.stop();
-          this.timer = 0;
+        else if(note.isInside(this.x, this.y)) {
+          this.dial();
+          //note.stop(m);
+          outside = false;
+          break;
         }
+        // else {
+        //   this.note.stop(m);
+        // }
       }
+      if(outside) this.walkabout();
     }
+  }
+
+  lock() {
+    console.log('Locked in.');
+    clearInterval(this.clickInt);
+  }
+
+  dial() {
+    console.log('Dialing');
+    this.setClicker(1000);
+  }
+
+  walkabout() {
+    console.log('Walking about.');
+    this.setClicker(2000);
+  }
+
+  setClicker(tempo) {
+    this._tempo = this.tempo;
+    this.tempo = tempo;
+    if(abs(this.tempo - this._tempo) < 1) return;
+    clearInterval(this.clickInt);
+    this.clickInt = setInterval(()=>{
+      this.click.play();
+    }, this.tempo);
   }
 
   display() {

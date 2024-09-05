@@ -14,6 +14,7 @@ class Note {
     this.ease = null;
     this.isActive = false;
     this.isPositioning = false;
+    this.occupants = { 'A' : false, 'B' : false };
   }
 
   isInside(x, y) {
@@ -45,10 +46,10 @@ class Note {
     let cue = cues[this.idx];
     cue.x = this.x;
     cue.y = this.y;
-    saveJSON(cues, 'cues-' + Date.now() + '.json');
   }
 
-  play() {
+  play(m) {
+    this.occupants[m] = true;
     // create Oscillator node
     if(this.isActive) return;
     console.log("PLAY!", this.f);
@@ -63,6 +64,10 @@ class Note {
   }
 
   stop() {
+    this.occupants[m] = false;
+    // let occupants = Object.values(this.occupants);
+    // let occupied = occupants.every((occupant) => occupant);
+    // if(occupied) return;
     if(!this.isActive) return;
     this.isActive = false;
     console.log("STOP", this.f);
