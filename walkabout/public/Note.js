@@ -26,6 +26,7 @@ class Note {
   }
 
   inPosition(x, y, o) {
+    console.log("Inside this note?");
     let r = orientationToRate(o);
     return this.isInside(x, y) && this._isOriented(r);
   }
@@ -40,6 +41,8 @@ class Note {
   }
 
   release() {
+    console.log("RELEASE!", this.idx, this.n);
+
     this.positioning = false;
 
     // Save new x,y position of note
@@ -49,12 +52,15 @@ class Note {
   }
 
   play(m) {
+    console.log("PLAY?", this.idx);
+
     this.occupants[m] = true;
     // create Oscillator node
     if(this.isActive) return;
-    console.log("PLAY!", this.f);
     this.isActive = true;
     clearInterval(this.ease);
+
+    console.log("PLAY!", this.idx);
     this.ease = setInterval(()=>{
       this.osc.amp(this.amp);
       if(this.amp < 1) this.amp+=0.01;
@@ -63,15 +69,18 @@ class Note {
     }, 10);
   }
 
-  stop() {
+  stop(m) {
+    console.log("STOP?", this.idx);
+
     this.occupants[m] = false;
-    // let occupants = Object.values(this.occupants);
-    // let occupied = occupants.every((occupant) => occupant);
-    // if(occupied) return;
+    let occupants = Object.values(this.occupants);
+    let occupied = occupants.some((occupant) => occupant);
+    if(occupied) return;
     if(!this.isActive) return;
     this.isActive = false;
-    console.log("STOP", this.f);
     clearInterval(this.ease);
+
+    console.log("STOP?", this.idx);
     this.ease = setInterval(()=>{
       this.osc.amp(this.amp);
       if(this.amp > 0) this.amp-=0.01;

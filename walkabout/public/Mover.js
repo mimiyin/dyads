@@ -16,11 +16,10 @@ class Mover {
     this.positioning = false;
     this.orienting = false;
 
-    // Assign note
-    this.note = notes[0];
-
     // Assign click
     this.click = loadSound('click.wav');
+    // Pan to left or right speaker
+    this.click.pan(m == 'A' ? 1 : -1);
 
     // Temp oscillator for pre-start
     this.osc = new p5.Oscillator("sine", 0);
@@ -31,8 +30,8 @@ class Mover {
     this.standby = true;
 
     // Track tempo
-    this.tempo = 10000;
-    this._tempo = 10000;
+    this.tempo = -1;
+    this._tempo = -1;
   }
 
   update(x, y, o, ts) {
@@ -69,39 +68,39 @@ class Mover {
     if (this.standby) {
       this.play();
       console.log(this.m, " is on standby!");
-      if (this.note.isInside(this.x, this.y)) this.stop();
-    }
-    else {
+      if (START.isInside(this.x, this.y)) this.stop();
+    } else {
       let outside = true;
       for (let note of notes) {
+        console.log(this.m, " is ready!");
         if (note.inPosition(this.x, this.y, this.o)) {
           this.lock();
-          this.note = note;
-          this.note.play(m);
+          note.play(this.m);
           outside = false;
           break;
+        } else {
+          note.stop(this.m);
+          if (note.isInside(this.x, this.y)) {
+            this.dial();
+            outside = false;
+            break;
+          }
         }
-        else if(note.isInside(this.x, this.y)) {
-          this.dial();
-          //note.stop(m);
-          outside = false;
-          break;
-        }
-        // else {
-        //   this.note.stop(m);
-        // }
       }
-      if(outside) this.walkabout();
+
+      // If mover is outside all of the notes
+      if (outside) this.walkabout();
     }
   }
 
   lock() {
     console.log('Locked in.');
+    this.tempo = -1;
     clearInterval(this.clickInt);
   }
 
   dial() {
-    console.log('Dialing');
+    console.log('Dialing.');
     this.setClicker(1000);
   }
 
@@ -113,9 +112,9 @@ class Mover {
   setClicker(tempo) {
     this._tempo = this.tempo;
     this.tempo = tempo;
-    if(abs(this.tempo - this._tempo) < 1) return;
+    if (abs(this.tempo - this._tempo) < 1) return;
     clearInterval(this.clickInt);
-    this.clickInt = setInterval(()=>{
+    this.clickInt = setInterval(() => {
       this.click.play();
     }, this.tempo);
   }

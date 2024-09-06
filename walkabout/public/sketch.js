@@ -20,17 +20,17 @@ let cues = [{
   {
     x: 300,
     y: 400,
-    n: 'so'
+    n: 'mi'
   },
   {
     x: 300,
     y: 500,
-    n: 'so'
+    n: 'fa'
   },
   {
     x: 300,
     y: 700,
-    n: 'so'
+    n: 'la'
   },
   {
     x: 500,
@@ -85,6 +85,7 @@ let movers = {
 
 // Locales
 let notes = [];
+let START;
 
 // Test sound
 let osc;
@@ -121,6 +122,8 @@ function setup() {
     notes.push(new Note(c, x, y, n));
   }
 
+  // Set starting note
+  START = notes[0];
 
 
   // Listen for data coming from the server
@@ -217,7 +220,7 @@ function position() {
     case NOTE:
       // Straight mouse testing
       for (let note of notes) note.position(mouseX, mouseY);
-      
+
       break;
   }
 }
@@ -233,14 +236,14 @@ function keyPressed() {
       try {
         for(let m in movers){
           let mover = movers[m];
-          mover.osc.start();
           mover.osc.amp(1);
+          mover.osc.start();
           mover.click.play();
         }
 
         for(let note of notes) {
-          note.osc.start();
           note.osc.amp(1);
+          note.osc.start();
         }
       } catch(e) {
         console.log('No movers yet!');
@@ -264,11 +267,12 @@ function keyPressed() {
 function mouseReleased() {
 
   switch (mode) {
-    case MOVER: 
+    case MOVER:
       for (let m in movers) {
         let mover = movers[m];
         if (mover) mover.release();
       }
+      break;
     case NOTE:
       for (let note of notes) {
         if (note.isInside(mouseX, mouseY)) note.release();
@@ -280,10 +284,7 @@ function mouseReleased() {
 function keyReleased() {
   if (key == 's') osc.amp(0);
 
-  for(let note of notes) {
-    //note.osc.start();
-    //note.osc.amp(1);
-  }
+  for(let note of notes) note.osc.amp(0);
 
   switch (mode) {
     case MOVER:
