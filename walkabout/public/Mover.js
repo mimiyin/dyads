@@ -19,7 +19,7 @@ class Mover {
     // Assign click
     this.click = loadSound('click.wav');
     // Pan to left or right speaker
-    this.click.pan(m == 'A' ? 1 : -1);
+    //this.click.pan(m == 'A' ? 1 : -1);
 
     // Temp oscillator for pre-start
     this.osc = new p5.Oscillator("sine", 0);
@@ -60,7 +60,6 @@ class Mover {
   }
 
   run() {
-
     // Draw the mover
     this.display();
 
