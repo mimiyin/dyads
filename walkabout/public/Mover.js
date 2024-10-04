@@ -19,7 +19,7 @@ class Mover {
     // Assign click
     this.click = loadSound('click.wav');
     // Pan to left or right speaker
-    //this.click.pan(m == 'A' ? 1 : -1);
+    this.click.pan(m == 'A' ? 1 : -1);
 
     // White noise
     this.white = loadSound('white.wav');
@@ -130,15 +130,15 @@ class Mover {
     // Turn off walkabout clicking
     clearInterval(this.clickInt);
     // Turn on white noise
-    this.white.loop();
+    //this.white.loop();
 
     //this.setClicker(1000);
   }
 
   walkabout() {
     console.log('Walking about.');
-    this.white.pause();
-    this.setClicker(2000);
+    //this.white.pause();
+    //this.setClicker(2000);
   }
 
   setClicker(tempo) {

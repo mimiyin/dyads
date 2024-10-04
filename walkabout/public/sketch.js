@@ -248,6 +248,7 @@ function keyPressed() {
           if(mover) {
             mover.osc.amp(1);
             mover.osc.start();
+            mover.osc.pan(m == 'A' ? 1 : -1);
             mover.click.play();
           }
         }
