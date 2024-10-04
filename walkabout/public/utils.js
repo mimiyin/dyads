@@ -30,7 +30,8 @@ const RATIOS = {
   'ti': {
     num: 15,
     den: 8
-  },
+  }
+  ,
   'do2': {
     num: 2,
     den: 1

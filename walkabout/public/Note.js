@@ -22,6 +22,8 @@ class Note {
   }
 
   _isOriented(r) {
+    if(this.n == 'do' && r == 2) r = 1;
+    else if(this.n == 'do2' && r ==1) r == 2;
     return this.r == r;
   }
 
@@ -51,12 +53,21 @@ class Note {
     cue.y = this.y;
   }
 
+  lock(m) {
+    let unlocked = !this.occupants[m]; // true if wasn't here
+    if(unlocked) this.occupants[m] = true;
+    return unlocked;
+  }
+
+  unlock(m) {
+    let locked = this.occupants[m]; // true if was here
+    if(locked) this.occupants[m] = false;
+    return locked;
+  }
+
   play(m) {
     console.log("PLAY?", this.idx);
 
-    this.occupants[m] = true;
-    // create Oscillator node
-    if(this.isActive) return;
     this.isActive = true;
     clearInterval(this.ease);
 

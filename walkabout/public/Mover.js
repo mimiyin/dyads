@@ -21,6 +21,9 @@ class Mover {
     // Pan to left or right speaker
     this.click.pan(m == 'A' ? 1 : -1);
 
+    // White noise
+    this.white = loadSound('white.wav');
+
     // Temp oscillator for pre-start
     this.osc = new p5.Oscillator("sine", 0);
     //this.osc.amp(1);
@@ -28,6 +31,7 @@ class Mover {
 
     // Track standby status
     this.standby = true;
+    this.dialing = false;
 
     // Track tempo
     this.tempo = -1;
@@ -40,11 +44,6 @@ class Mover {
     this.o = o;
     this.ox = RAD * cos(this.o) + this.x;
     this.oy = RAD * sin(this.o) + this.y;
-  }
-
-  ready() {
-    // If note is done
-    return this.timer > this.note.t;
   }
 
   // Play frequency feedback when in standby mode
@@ -71,41 +70,75 @@ class Mover {
       if (START.isInside(this.x, this.y)) this.stop();
     } else {
       let outside = true;
+      console.log(this.m, " is ready!");
+
       for (let note of notes) {
-        console.log(this.m, " is ready!");
-        if (note.inPosition(this.x, this.y, this.o)) {
-          this.lock();
-          note.play(this.m);
+        console.log("Note", note.idx);
+        if (note.isInside(this.x, this.y)) {
+          console.log("Inside");
+          if (note.inPosition(this.x, this.y, this.o)) {
+            if (note.lock(this.m)) {
+              console.log("Locking");
+              this.lock();
+              note.play();
+            }
+            // I'm no longer oriented, but still inside the note
+          } else {
+            // Check to see if we just unlocked
+            if (note.unlock(this.m)) {
+              console.log('Unlocking');
+              note.stop(this.m);
+              // Play white noise
+              this.dial();
+            }
+            // Or if I just came in from the outside
+            else if(!this.dialing) this.dial();
+          }
           outside = false;
+          this.dialing = true;
           break;
         } else {
-          note.stop(this.m);
-          if (note.isInside(this.x, this.y)) {
-            this.dial();
-            outside = false;
-            break;
+          // In case user exits note in same frame as they lose orientation
+          if (note.unlock(this.m)) {
+            note.stop(this.m);
           }
         }
       }
 
-      // If mover is outside all of the notes
-      if (outside) this.walkabout();
+      console.log("Outside?", outside, "Dialing", this.dialing);
+      // Is mover dialing in any of the notes?
+      if (outside && this.dialing) {
+        console.log("Walking!");
+        this.walkabout();
+        this.dialing = false;
+      }
+
     }
   }
 
   lock() {
     console.log('Locked in.');
     this.tempo = -1;
-    clearInterval(this.clickInt);
+    //clearInterval(this.clickInt);
+
+    // Turn off white noise
+    this.white.pause();
   }
 
   dial() {
     console.log('Dialing.');
-    this.setClicker(1000);
+
+    // Turn off walkabout clicking
+    clearInterval(this.clickInt);
+    // Turn on white noise
+    this.white.loop();
+
+    //this.setClicker(1000);
   }
 
   walkabout() {
     console.log('Walking about.');
+    this.white.pause();
     this.setClicker(2000);
   }
 

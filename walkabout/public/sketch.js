@@ -225,6 +225,23 @@ function position() {
   }
 }
 
+function mouseReleased() {
+
+  switch (mode) {
+    case MOVER:
+      for (let m in movers) {
+        let mover = movers[m];
+        if (mover) mover.release();
+      }
+      break;
+    case NOTE:
+      for (let note of notes) {
+        if (note.isInside(mouseX, mouseY)) note.release();
+      }
+      break;
+  }
+}
+
 function keyPressed() {
 
   switch (key) {
@@ -239,6 +256,7 @@ function keyPressed() {
           mover.osc.amp(1);
           mover.osc.start();
           mover.click.play();
+          mover.white.play();
         }
 
         for(let note of notes) {
@@ -264,25 +282,24 @@ function keyPressed() {
   }
 }
 
-function mouseReleased() {
-
-  switch (mode) {
-    case MOVER:
-      for (let m in movers) {
-        let mover = movers[m];
-        if (mover) mover.release();
-      }
-      break;
-    case NOTE:
-      for (let note of notes) {
-        if (note.isInside(mouseX, mouseY)) note.release();
-      }
-      break;
-  }
-}
-
 function keyReleased() {
-  if (key == 's') osc.amp(0);
+  if (key == 's') {
+    osc.amp(0);
+
+    try {
+      for(let m in movers){
+        let mover = movers[m];
+        mover.white.stop();
+      }
+
+      for(let note of notes) {
+        note.osc.amp(1);
+        note.osc.start();
+      }
+    } catch(e) {
+      console.log('No movers yet!');
+    }
+  }
 
   for(let note of notes) note.osc.amp(0);
 
