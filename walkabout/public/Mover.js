@@ -19,7 +19,7 @@ class Mover {
     // Assign click
     this.click = loadSound('click.wav');
     // Pan to left or right speaker
-    this.click.pan(m == 'A' ? 1 : -1);
+    //this.click.pan(m == 'A' ? 1 : -1);
 
     // White noise
     this.white = loadSound('white.wav');
@@ -59,7 +59,6 @@ class Mover {
   }
 
   run() {
-
     // Draw the mover
     this.display();
 

@@ -43,9 +43,9 @@ client.on("message", (topic, message) => {
   // message is Buffer
 
   try {
-  let data = JSON.parse(message.toString());
-  //console.log(topic, data);
-  io.emit("pozyx", data);
+    let data = JSON.parse(message.toString());
+    //console.log(topic, data);
+    io.emit("pozyx", data);
   }
   catch(e) {
     console.log('Whoops, no data.');

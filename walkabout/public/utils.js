@@ -122,6 +122,9 @@ function orientationToRate(o) {
       closest = dr;
     }
   }
+  // Default to do
+  if(nr == 2) nr = 1;
+
   // Snap to closest r
   return nr;
 }

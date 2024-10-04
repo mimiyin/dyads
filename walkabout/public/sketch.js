@@ -15,28 +15,18 @@ let cues = [{
   {
     x: 300,
     y: 100,
-    n: 'so'
-  },
-  {
-    x: 300,
-    y: 400,
     n: 'mi'
   },
   {
     x: 300,
-    y: 500,
-    n: 'fa'
+    y: 400,
+    n: 'so'
   },
   {
     x: 300,
-    y: 700,
-    n: 'la'
+    y: 500,
+    n: 'ti'
   },
-  {
-    x: 500,
-    y: 400,
-    n: 'so'
-  }
 ]
 
 
@@ -138,8 +128,9 @@ function setup() {
     let ts = tag.ts;
     if (data) {
       if (data.coordinates) {
-        let x = data.coordinates.x / 10;
-        let y = (data.coordinates.y / 10 ) + 200;
+        let x = data.coordinates.x / 20;
+        let y = (data.coordinates.y / 20) + 250;
+        console.log(data.coordinates.x);
         calc(id, {
           x: x,
           y: y,
@@ -196,7 +187,7 @@ function draw() {
     // Is everyone ready to move on?
     let _movers = Object.values(movers);
     // Run every mover
-    _movers.forEach((mover) => mover.run());
+    _movers.forEach((mover) => { if(mover) mover.run() });
 
     // let ready = _movers.every((mover) => mover.ready());
     // // If everyone ready, move everyone ahead
@@ -249,14 +240,16 @@ function keyPressed() {
       osc.amp(0);
       osc.start();
       osc.amp(1);
+      console.log(movers);
 
       try {
         for(let m in movers){
           let mover = movers[m];
-          mover.osc.amp(1);
-          mover.osc.start();
-          mover.click.play();
-          mover.white.play();
+          if(mover) {
+            mover.osc.amp(1);
+            mover.osc.start();
+            mover.click.play();
+          }
         }
 
         for(let note of notes) {
