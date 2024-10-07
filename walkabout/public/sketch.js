@@ -240,7 +240,11 @@ function keyPressed() {
       osc.amp(0);
       osc.start();
       osc.amp(1);
-      console.log(movers);
+
+      for(let note of notes) {
+        note.osc.amp(1);
+        note.osc.start();
+      }
 
       try {
         for(let m in movers){
@@ -248,13 +252,7 @@ function keyPressed() {
           if(mover) {
             mover.osc.amp(1);
             mover.osc.start();
-            mover.click.play();
           }
-        }
-
-        for(let note of notes) {
-          note.osc.amp(1);
-          note.osc.start();
         }
       } catch(e) {
         console.log('No movers yet!');
@@ -278,28 +276,14 @@ function keyPressed() {
 function keyReleased() {
   if (key == 's') {
     osc.amp(0);
-
-    try {
-      for(let m in movers){
-        let mover = movers[m];
-        mover.white.stop();
-      }
-
-      for(let note of notes) {
-        note.osc.amp(1);
-        note.osc.start();
-      }
-    } catch(e) {
-      console.log('No movers yet!');
-    }
+    // Only turn off inactive notes
+    for(let note of notes) if(!note.isActive) note.osc.amp(0);
   }
-
-  for(let note of notes) note.osc.amp(0);
 
   switch (mode) {
     case MOVER:
       for(let m in movers) {
-        if(m == key.toUpperCase()) movers[m] = new Mover(m, mouseX, mouseY, PI / 2, Date.now());
+        if(m == key.toUpperCase()) movers[m] = new Mover(m, mouseX, mouseY, -PI / 2, Date.now());
       }
       break;
   }

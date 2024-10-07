@@ -26,6 +26,7 @@ class Mover {
 
     // Temp oscillator for pre-start
     this.osc = new p5.Oscillator("sine", 0);
+    this.osc.pan(m == 'A' ? 1 : -1);
     //this.osc.amp(1);
     //this.osc.start();
 
@@ -53,6 +54,7 @@ class Mover {
   }
 
   stop() {
+    console.log(this.m, " is ready to go.");
     this.osc.amp(0);
     this.osc.stop();
     this.standby = false;
@@ -69,17 +71,17 @@ class Mover {
       if (START.isInside(this.x, this.y)) this.stop();
     } else {
       let outside = true;
-      console.log(this.m, " is ready!");
+      //console.log(this.m, " is ready!");
 
       for (let note of notes) {
-        console.log("Note", note.idx);
+        //console.log("Note", note.idx);
         if (note.isInside(this.x, this.y)) {
-          console.log("Inside");
+          //console.log("Inside");
           if (note.inPosition(this.x, this.y, this.o)) {
             if (note.lock(this.m)) {
               console.log("Locking");
               this.lock();
-              note.play();
+              note.play(this.m);
             }
             // I'm no longer oriented, but still inside the note
           } else {
@@ -104,7 +106,7 @@ class Mover {
         }
       }
 
-      console.log("Outside?", outside, "Dialing", this.dialing);
+      //console.log("Outside?", outside, "Dialing", this.dialing);
       // Is mover dialing in any of the notes?
       if (outside && this.dialing) {
         console.log("Walking!");
@@ -121,24 +123,22 @@ class Mover {
     //clearInterval(this.clickInt);
 
     // Turn off white noise
-    this.white.pause();
+    //this.white.pause();
   }
 
   dial() {
     console.log('Dialing.');
 
-    // Turn off walkabout clicking
-    clearInterval(this.clickInt);
-    // Turn on white noise
-    this.white.loop();
-
-    //this.setClicker(1000);
+    // // Turn off walkabout clicking
+    // clearInterval(this.clickInt);
+    // // Turn on white noise
+    // this.white.loop();
   }
 
   walkabout() {
     console.log('Walking about.');
-    this.white.pause();
-    this.setClicker(2000);
+    // this.white.pause();
+    // this.setClicker(2000);
   }
 
   setClicker(tempo) {
@@ -152,7 +152,6 @@ class Mover {
   }
 
   display() {
-
     // Draw mover and heading
     push();
     translate(this.x, this.y);

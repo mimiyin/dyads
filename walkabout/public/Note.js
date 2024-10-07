@@ -14,7 +14,14 @@ class Note {
     this.ease = null;
     this.isActive = false;
     this.isPositioning = false;
-    this.occupants = { 'A' : false, 'B' : false };
+    this.occupants = {
+      'A': false,
+      'B': false
+    };
+
+    if(this.n == 'do2') {
+      console.log(this.r, this.o, this.f);
+    }
   }
 
   isInside(x, y) {
@@ -22,21 +29,21 @@ class Note {
   }
 
   _isOriented(r) {
-    if(this.n == 'do' && r == 2) r = 1;
-    else if(this.n == 'do2' && r ==1) r == 2;
+    if (this.n == 'do' && r == 2) r = 1;
+    else if (this.n == 'do2' && r == 1) r = 2;
     return this.r == r;
   }
 
   inPosition(x, y, o) {
-    console.log("Inside this note?");
+    //console.log("Inside this note?");
     let r = orientationToRate(o);
     return this.isInside(x, y) && this._isOriented(r);
   }
 
   position(x, y) {
     let d = dist(this.x, this.y, x, y);
-    if(d < RAD) this.positioning = true;
-    if(this.positioning) {
+    if (d < RAD) this.positioning = true;
+    if (this.positioning) {
       this.x = x;
       this.y = y;
     }
@@ -55,26 +62,26 @@ class Note {
 
   lock(m) {
     let unlocked = !this.occupants[m]; // true if wasn't here
-    if(unlocked) this.occupants[m] = true;
+    if (unlocked) this.occupants[m] = true;
     return unlocked;
   }
 
   unlock(m) {
     let locked = this.occupants[m]; // true if was here
-    if(locked) this.occupants[m] = false;
+    if (locked) this.occupants[m] = false;
     return locked;
   }
 
   play(m) {
-    console.log("PLAY?", this.idx);
+    console.log("PLAY", this.idx);
 
     this.isActive = true;
     clearInterval(this.ease);
-
-    console.log("PLAY!", this.idx);
-    this.ease = setInterval(()=>{
+    
+    this.osc.pan(m == 'A' ? 1 : -1);
+    this.ease = setInterval(() => {
       this.osc.amp(this.amp);
-      if(this.amp < 1) this.amp+=0.01;
+      if (this.amp < 1) this.amp += 0.01;
       else clearInterval(this.ease);
       //console.log("AMP", this.amp);
     }, 10);
@@ -86,15 +93,15 @@ class Note {
     this.occupants[m] = false;
     let occupants = Object.values(this.occupants);
     let occupied = occupants.some((occupant) => occupant);
-    if(occupied) return;
-    if(!this.isActive) return;
+    if (occupied) return;
+    if (!this.isActive) return;
     this.isActive = false;
     clearInterval(this.ease);
 
-    console.log("STOP?", this.idx);
-    this.ease = setInterval(()=>{
+    console.log("STOP", this.idx);
+    this.ease = setInterval(() => {
       this.osc.amp(this.amp);
-      if(this.amp > 0) this.amp-=0.01;
+      if (this.amp > 0) this.amp -= 0.01;
       else clearInterval(this.ease);
     }, 10);
     this.osc.amp(0);
@@ -104,7 +111,7 @@ class Note {
     push();
     translate(this.x, this.y);
     fill(255);
-    ellipse(0, 0, RAD*2);
+    ellipse(0, 0, RAD * 2);
     textSize(14);
     textAlign(CENTER, CENTER);
     fill(0);
