@@ -129,30 +129,16 @@ class Mover {
   dial() {
     console.log('Dialing.');
 
-<<<<<<< HEAD
     // // Turn off walkabout clicking
     // clearInterval(this.clickInt);
     // // Turn on white noise
     // this.white.loop();
-=======
-    // Turn off walkabout clicking
-    clearInterval(this.clickInt);
-    // Turn on white noise
-    //this.white.loop();
-
-    //this.setClicker(1000);
->>>>>>> 5d99e970c734e6e94437b5290bdb1e593bf533c2
   }
 
   walkabout() {
     console.log('Walking about.');
-<<<<<<< HEAD
     // this.white.pause();
     // this.setClicker(2000);
-=======
-    //this.white.pause();
-    //this.setClicker(2000);
->>>>>>> 5d99e970c734e6e94437b5290bdb1e593bf533c2
   }
 
   setClicker(tempo) {

@@ -81,7 +81,7 @@ let START;
 let osc;
 
 // Size of note area
-const RAD = 30;
+const RAD = 20;
 
 
 
@@ -118,7 +118,7 @@ function setup() {
 
   // Listen for data coming from the server
   socket.on('pozyx', function(message) {
-    //return;
+    return;
     // Log the data
     //console.log('Received message: ', message);
     // Draw a circle at the y-position of the other user

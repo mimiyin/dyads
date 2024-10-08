@@ -77,11 +77,12 @@ class Note {
 
     this.isActive = true;
     clearInterval(this.ease);
-    
+    let max = m == 'A' ? 1 : 0.8;
     this.osc.pan(m == 'A' ? 1 : -1);
+
     this.ease = setInterval(() => {
       this.osc.amp(this.amp);
-      if (this.amp < 1) this.amp += 0.01;
+      if (this.amp < max) this.amp += 0.01;
       else clearInterval(this.ease);
       //console.log("AMP", this.amp);
     }, 10);
