@@ -276,6 +276,17 @@ function keyPressed() {
 function keyReleased() {
   if (key == 's') {
     osc.amp(0);
+    // Turn off mover if no longer in standby mode
+    try {
+      for(let m in movers){
+        let mover = movers[m];
+        if(mover && !mover.standby) {
+          mover.osc.stop();
+        }
+      }
+    } catch(e) {
+      console.log('No movers yet!');
+    }
     // Only turn off inactive notes
     for(let note of notes) if(!note.isActive) note.osc.amp(0);
   }
