@@ -77,14 +77,13 @@ class Note {
 
     this.isActive = true;
     clearInterval(this.ease);
-    let max = m == 'A' ? 1 : 0.8;
     this.osc.pan(m == 'A' ? 1 : -1);
-
+    this.osc.amp(0);
     this.ease = setInterval(() => {
-      this.osc.amp(this.amp);
-      if (this.amp < max) {
-        this.amp += 0.01;
-        console.log("Still fading in: ", this.amp);
+      if (this.amp < 1) {
+        this.amp += 0.005;
+        this.osc.amp(this.amp);
+        console.log("Still fading in: ", m, this.amp);
       }
       else clearInterval(this.ease);
       //console.log("AMP", this.amp);
@@ -104,10 +103,10 @@ class Note {
 
     console.log("STOP", this.idx);
     this.ease = setInterval(() => {
-      this.osc.amp(this.amp);
       if (this.amp > 0) {
-        this.amp -= 0.01;
-        console.log("Still fading out: ", this.amp);
+        this.amp -= 0.001;
+        this.osc.amp(this.amp);
+        //console.log("Still fading out: ", this.amp);
       }
       else clearInterval(this.ease);
     }, 10);

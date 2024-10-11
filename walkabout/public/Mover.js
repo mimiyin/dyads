@@ -33,6 +33,7 @@ class Mover {
     // Track standby status
     this.standby = true;
     this.dialing = false;
+    this.stop();
 
     // Track tempo
     this.tempo = -1;

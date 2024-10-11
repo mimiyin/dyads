@@ -118,19 +118,18 @@ function setup() {
 
   // Listen for data coming from the server
   socket.on('pozyx', function(message) {
-    return;
+    //return;
     // Log the data
     //console.log('Received message: ', message);
     // Draw a circle at the y-position of the other user
     let tag = message[0];
-    let data = tag.data;
+    let data = tag.data//;
     let id = tag.tagId;
     let ts = tag.ts;
     if (data) {
       if (data.coordinates) {
         let x = data.coordinates.x / 20;
         let y = (data.coordinates.y / 20) + 250;
-        console.log(data.coordinates.x);
         calc(id, {
           x: x,
           y: y,
