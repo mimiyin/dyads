@@ -83,7 +83,8 @@ let osc;
 // Size of note area
 const RAD = 20;
 
-
+// Set ready-ness status for everyone
+let ready = false;
 
 // Listen for when the socket connects
 socket.on('connect', function() {

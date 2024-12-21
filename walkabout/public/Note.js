@@ -81,7 +81,7 @@ class Note {
     this.osc.amp(0);
     this.ease = setInterval(() => {
       if (this.amp < 1) {
-        this.amp += 0.005;
+        this.amp += 1; //0.005;
         this.osc.amp(this.amp);
         console.log("Still fading in: ", m, this.amp);
       }
@@ -104,7 +104,7 @@ class Note {
     console.log("STOP", this.idx);
     this.ease = setInterval(() => {
       if (this.amp > 0) {
-        this.amp -= 0.001;
+        this.amp -= 1; //0.002;
         this.osc.amp(this.amp);
         //console.log("Still fading out: ", this.amp);
       }
@@ -118,10 +118,12 @@ class Note {
     translate(this.x, this.y);
     fill(255);
     ellipse(0, 0, RAD * 2);
+    textFont('Courier');
     textSize(14);
     textAlign(CENTER, CENTER);
     fill(0);
-    text(this.idx + ': ' + this.n, 0, -RAD * 1.5);
+    strokeWeight(2);
+    text(this.idx + ': ' + this.n, 0, RAD * 1.5);
     rotate(this.o);
     line(0, 0, RAD, 0);
     pop();
