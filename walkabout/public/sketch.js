@@ -34,12 +34,15 @@ let cues = [{
 let socket = io();
 
 // 10 seconds in each location
-const DURATION = 10000;
+//const DURATION = 10000;
 
 // Set the mode
-let mode = 1;
+let mode = 0;
 const MOVER = 0;
 const NOTE = 1;
+
+// Set standby
+const STANDBY = false;
 
 // Remembering where we are
 let o = 0;
@@ -280,9 +283,7 @@ function keyReleased() {
     try {
       for(let m in movers){
         let mover = movers[m];
-        if(mover && !mover.standby) {
-          mover.osc.stop();
-        }
+        if(mover && !mover.standby) mover.osc.stop();
       }
     } catch(e) {
       console.log('No movers yet!');

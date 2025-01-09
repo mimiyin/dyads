@@ -31,10 +31,9 @@ class Mover {
     //this.osc.start();
 
     // Track standby status
-    this.standby = true;
+    this.standby = STANDBY;
     this.dialing = false;
-    this.stop();
-
+   
     // Track tempo
     this.tempo = -1;
     this._tempo = -1;
@@ -52,6 +51,7 @@ class Mover {
   play() {
     let f = orientationToFrequency(this.o);
     this.osc.freq(f);
+    console.log(f);
   }
 
   stop() {
@@ -69,10 +69,10 @@ class Mover {
     if (this.standby) {
       this.play();
       console.log(this.m, " is on standby!");
-      if (START.isInside(this.x, this.y)) this.stop();
+      //if (START.isInside(this.x, this.y)) this.stop();
     } else {
       let outside = true;
-      //console.log(this.m, " is ready!");
+      console.log(this.m, " is ready!");
 
       for (let note of notes) {
         //console.log("Note", note.idx);

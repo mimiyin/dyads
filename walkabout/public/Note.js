@@ -81,7 +81,7 @@ class Note {
     this.osc.amp(0);
     this.ease = setInterval(() => {
       if (this.amp < 1) {
-        this.amp += 1; //0.005;
+        this.amp += 0.005;
         this.osc.amp(this.amp);
         console.log("Still fading in: ", m, this.amp);
       }
@@ -104,7 +104,7 @@ class Note {
     console.log("STOP", this.idx);
     this.ease = setInterval(() => {
       if (this.amp > 0) {
-        this.amp -= 1; //0.002;
+        this.amp -= 0.002;
         this.osc.amp(this.amp);
         //console.log("Still fading out: ", this.amp);
       }
